@@ -13,7 +13,8 @@ The committed `debug.keystore` keeps the signature stable, so new builds install
 ## What is stored where
 - Accounts (name, email, salted PBKDF2 password hash), progress and the optional Anthropic API key
   are kept in the app's local storage on the phone. There is no server.
-- Ride, Pager and Teach call the Anthropic API with the key entered under Profile.
+- Ride, Pager and Teach use built-in content for every stop and work offline.
+  An Anthropic API key under Profile is optional and adds freshly generated versions.
   Model names are in `MODELS` near the top of the script in `assets/index.html`.
 
 ## Versions
