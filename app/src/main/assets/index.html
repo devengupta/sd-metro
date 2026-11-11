@@ -1,0 +1,1547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Design Metro</title>
+<style>
+@font-face{font-family:"Chakra Petch";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/chakra-petch-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Chakra Petch";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/chakra-petch-latin-600-normal.woff2") format("woff2")}
+@font-face{font-family:"Chakra Petch";font-weight:700;font-style:normal;font-display:swap;src:url("fonts/chakra-petch-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/manrope-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/manrope-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"Manrope";font-weight:700;font-style:normal;font-display:swap;src:url("fonts/manrope-latin-700-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:400;font-style:normal;font-display:swap;src:url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:500;font-style:normal;font-display:swap;src:url("fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2")}
+@font-face{font-family:"IBM Plex Mono";font-weight:600;font-style:normal;font-display:swap;src:url("fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2")}
+
+/* ---------- app additions: sign-in and profile ---------- */
+nav.dock[hidden]{display:none}
+.field{display:grid;gap:4px;margin:12px 0}
+.field label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+input[type=text],input[type=email],input[type=password]{width:100%;border:1px solid var(--rule);padding:11px 10px;font:inherit;background:var(--deep);color:var(--ink);border-radius:0}
+input::placeholder{color:var(--dim)}
+input:focus{outline:2px solid var(--signal);outline-offset:0}
+.authHero{margin:8px 0 18px}
+.authHero h1{font-size:clamp(40px,12vw,64px)}
+.authHero h1 span{color:var(--signal)}
+.authHero p{color:var(--muted);margin:8px 0 0;max-width:46ch}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:14px;margin:6px 0 12px}
+.kv span:nth-child(odd){font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);align-self:center}
+.ok{color:var(--good)} .danger{border-color:var(--bad)!important;color:var(--bad)!important}
+/* Layout idea: an engineering blueprint. Cobalt drafting sheet with a fine grid, white linework,
+   pastel line colours, safety-yellow for "act here". Square corners, technical type. Single theme by choice. */
+:root{
+  --paper:#16337F;      /* drafting sheet */
+  --card:#1D3F95;       /* raised panel */
+  --deep:#0B1C4A;       /* dark blocks: ticket, signage, pager, dock */
+  --ink:#F3F6FF;        /* primary linework / text */
+  --muted:#A8BAE8;
+  --dim:#8FA3D6;
+  --rule:rgba(220,230,255,.24);
+  --signal:#FFD23F;     /* safety yellow */
+  --good:#5BE3A1; --warn:#FFC94D; --bad:#FF7F70;
+  --display:"Chakra Petch", "Arial Narrow", sans-serif;
+  --body:"Manrope", "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  background-color:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent;
+  background-image:
+    linear-gradient(rgba(220,230,255,.09) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(220,230,255,.09) 1px,transparent 1px),
+    linear-gradient(rgba(220,230,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(220,230,255,.035) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;
+  background-attachment:fixed;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.05;text-transform:uppercase;letter-spacing:.02em;font-weight:700}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 110px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+/* ---------- title block ---------- */
+.mast{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:6px 0 14px;margin-bottom:16px;border-bottom:1px solid var(--ink);position:relative}
+.mast::after{content:"";position:absolute;left:0;right:0;bottom:-5px;border-bottom:1px dashed var(--rule)}
+.mast h1{font-size:clamp(34px,9.5vw,60px);font-weight:700;letter-spacing:.01em}
+.mast h1 span{color:var(--signal)}
+.mast .sub{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:.02em}
+
+/* ---------- ticket = drawing title block ---------- */
+.ticket{display:grid;grid-template-columns:repeat(4,1fr);background:var(--deep);border:1px solid var(--ink);border-radius:2px}
+.ticket > div{padding:10px 12px;border-right:1px solid var(--rule)}
+.ticket > div:last-child{border-right:0}
+.ticket b{display:block;font-family:var(--display);font-size:30px;font-weight:700;line-height:1;margin-top:4px}
+.ticket small{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.ticket .rank{grid-column:1/-1;border-right:0;border-top:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;font-size:13px;font-family:var(--mono)}
+.bar{height:6px;background:rgba(220,230,255,.15);overflow:hidden;flex:1;margin:0 10px}
+.bar i{display:block;height:100%;background:var(--signal)}
+@media (max-width:420px){.ticket b{font-size:23px}.ticket > div{padding:9px 8px}}
+
+.continue{margin:14px 0 4px;display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--signal);color:var(--deep);border-radius:2px;padding:12px 14px}
+.continue .lbl{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.1em;opacity:.75}
+.continue .nm{font-family:var(--display);font-size:23px;font-weight:700;text-transform:uppercase}
+.continue .go{white-space:nowrap;margin-left:auto;font-family:var(--display);font-weight:700;font-size:18px;text-transform:uppercase}
+
+/* ---------- map trunk ---------- */
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;margin:18px 0 6px;color:var(--muted);font-family:var(--mono)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:18px;height:4px;display:inline-block}
+.trunk{list-style:none;margin:8px 0 0;padding:0}
+.stn{position:relative;display:grid;grid-template-columns:64px 1fr;min-height:76px}
+.stn::before{content:"";position:absolute;left:29px;top:0;bottom:0;width:6px;background:var(--c)}
+.stn:first-child::before{top:30px}
+.stn.term::before{bottom:auto;height:30px}
+.stn .dot{position:relative;z-index:1;margin:14px 0 0 16px;width:32px;height:32px;border-radius:50%;background:var(--paper);border:2px solid var(--c);display:grid;place-items:center}
+.stn .dot i{width:20px;height:20px;border-radius:50%;background:var(--card);display:block}
+.stn a{display:block;text-decoration:none;color:inherit;padding:10px 0 14px;border-bottom:1px dashed var(--rule)}
+.stn a:hover .nm{color:var(--signal)}
+.stn .num{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.08em}
+.stn .nm{font-family:var(--display);font-size:22px;font-weight:600;line-height:1.1;text-transform:uppercase;letter-spacing:.01em}
+.stn .meta{display:flex;gap:10px;align-items:center;font-size:12px;color:var(--muted);margin-top:5px;font-family:var(--mono)}
+.stn .meta span{white-space:nowrap}
+.mini{flex:0 1 90px;min-width:30px;width:90px;height:4px;background:rgba(220,230,255,.15);overflow:hidden}
+.mini i{display:block;height:100%;background:var(--c)}
+.here{display:inline-block;background:var(--signal);color:var(--deep);font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:2px 7px;margin-left:8px;vertical-align:middle}
+.zone{text-transform:uppercase;letter-spacing:.08em;padding:0 6px;border:1px solid var(--c);color:var(--c)}
+.terminus{background:var(--deep);border:1px solid var(--signal);padding:14px 16px;margin-top:4px}
+.terminus h3{font-size:22px;color:var(--signal)}
+.terminus ul{margin:8px 0 0;padding-left:18px;font-size:14px;color:var(--muted)}
+
+/* ---------- line view ---------- */
+.back{background:none;border:0;padding:6px 0;font-size:13px;color:var(--muted);display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);text-decoration:none}
+.back:hover{color:var(--ink)}
+.lineHead{background:var(--deep);border:1px solid var(--c);border-left:10px solid var(--c);padding:16px;margin:6px 0 14px}
+.lineHead .code{font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--c)}
+.lineHead h2{font-size:clamp(30px,8vw,46px);margin-top:4px}
+.lineHead p{margin:6px 0 0;max-width:55ch;color:var(--muted)}
+.lineHead .prog{margin-top:12px;display:flex;align-items:center;gap:10px;font-size:12px;font-family:var(--mono)}
+.lineHead .prog .bar{margin:0}
+.lineHead .prog .bar i{background:var(--c)}
+.stops{list-style:none;margin:0;padding:0}
+.stop{position:relative;display:grid;grid-template-columns:44px 1fr}
+.stop::before{content:"";position:absolute;left:19px;top:0;bottom:0;width:4px;background:var(--c)}
+.stop:first-child::before{top:22px}
+.stop:last-child::before{bottom:auto;height:22px}
+.stop.d2{grid-template-columns:44px 26px 1fr}
+.stop.d2::after{content:"";position:absolute;left:23px;top:22px;width:30px;height:0;border-top:2px dashed var(--c)}
+.stop.d2 .sd{grid-column:2}
+.stop.d2 a{grid-column:3}
+.stop.d3{grid-template-columns:44px 52px 1fr}
+.stop.d3 .sd{grid-column:2;justify-self:end}
+.stop.d3 a{grid-column:3}
+.sd{position:relative;z-index:1;margin-top:13px;margin-left:12px;width:18px;height:18px;border-radius:50%;border:2px solid var(--ink);background:var(--card)}
+.stop.d2 .sd,.stop.d3 .sd{margin-left:6px;width:14px;height:14px;margin-top:15px}
+.stop a{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 4px 10px 8px;text-decoration:none;color:inherit;border-bottom:1px dashed var(--rule);min-height:46px}
+.stop a:hover{background:rgba(220,230,255,.06)}
+.stop .sn{font-weight:700;line-height:1.3}
+.stop.d2 .sn,.stop.d3 .sn{font-weight:500;color:var(--muted)}
+.ix{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle;flex-wrap:wrap}
+.ix b{font-family:var(--mono);font-size:10px;font-weight:600;padding:0 5px;border:1px solid var(--signal);color:var(--signal)}
+.pips{display:inline-flex;gap:3px;flex:none}
+.pips i{width:9px;height:9px;border:1.5px solid var(--dim);display:block;transform:rotate(45deg)}
+.pips i.on.e{background:#8EC5FF;border-color:#8EC5FF}
+.pips i.on.i{background:var(--signal);border-color:var(--signal)}
+.pips i.on.t{background:var(--good);border-color:var(--good)}
+
+/* ---------- stop / platform ---------- */
+.sign{background:var(--deep);border:1px solid var(--ink);padding:14px 16px 16px;display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;margin:6px 0 10px}
+.roundel{width:52px;height:52px;background:var(--c);color:var(--on);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:24px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.sign .ln{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sign h2{font-size:clamp(26px,7.5vw,40px);margin-top:3px}
+.adj{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.adj a{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--rule);padding:8px 10px;font-size:13px;min-width:0}
+.adj a span{display:block;font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.adj a strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.adj a.nx{text-align:right}
+.adj a.off{visibility:hidden}
+.ichg{font-size:13px;margin:-2px 0 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ichg a{text-decoration:none;color:var(--signal);border:1px solid var(--signal);padding:2px 10px;font-size:12px;font-family:var(--mono)}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.mode{background:var(--card);border:1px solid var(--rule);padding:10px;text-align:left;position:relative}
+.mode[aria-selected="true"]{border-color:var(--signal);background:var(--deep);box-shadow:inset 0 -3px 0 var(--signal)}
+.mode .t{font-family:var(--display);font-weight:700;font-size:20px;line-height:1;text-transform:uppercase}
+.mode .d{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.3}
+.mode .ok{position:absolute;top:10px;right:10px;width:9px;height:9px;border:1.5px solid var(--dim);transform:rotate(45deg)}
+.mode .ok.on{border-color:transparent}
+.panel{background:var(--card);border:1px solid var(--rule);padding:16px;position:relative}
+.panel::before,.panel::after{content:"";position:absolute;width:12px;height:12px;border-color:var(--ink);border-style:solid}
+.panel::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.panel::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.panel h3{font-size:20px;margin-bottom:6px;letter-spacing:.06em}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.chip{border:1px solid var(--rule);background:transparent;padding:5px 12px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--deep);border-color:var(--ink)}
+.btn{background:var(--signal);color:var(--deep);border:0;border-radius:2px;padding:11px 18px;font-family:var(--display);font-weight:700;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--ink)}
+.btn.sig{background:var(--signal)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:13px;color:var(--muted)}
+.note a{color:var(--ink)}
+.err{background:rgba(255,127,112,.12);border:1px solid var(--bad);color:#FFD3CC;padding:10px 12px;font-size:14px;margin-top:10px}
+.tagline{font-family:var(--display);font-size:24px;font-weight:600;line-height:1.15;margin:4px 0 10px;color:var(--signal);text-transform:uppercase}
+.prose p{margin:0 0 10px;max-width:65ch}
+.amap{display:grid;grid-template-columns:1fr auto 1fr;gap:4px 10px;font-size:14px;margin:6px 0 14px;align-items:center;border:1px dashed var(--rule);padding:10px}
+.amap .h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.amap .ar{color:var(--signal);font-family:var(--mono)}
+.facts{display:grid;gap:8px;margin:12px 0}
+.fact{border-left:3px solid var(--c);padding:4px 0 4px 10px;font-size:14px}
+.fact b{display:block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500}
+.pocket{background:var(--deep);border:1px dashed var(--signal);padding:12px 14px;margin:12px 0}
+.pocket b{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--signal);display:block;font-weight:500}
+.pocket p{margin:4px 0 0;font-size:17px}
+.pocket.win{border:1px solid var(--good)} .pocket.win b{color:var(--good)}
+.pocket.loss{border:1px solid var(--bad)} .pocket.loss b{color:var(--bad)}
+.q{margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--rule)}
+.q .qq{font-weight:700;margin-bottom:8px}
+.opts{display:grid;gap:6px}
+.opt{text-align:left;background:rgba(11,28,74,.45);border:1px solid var(--rule);padding:10px 12px;font-size:15px}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt.right{border-color:var(--good);background:rgba(91,227,161,.14)}
+.opt.wrong{border-color:var(--bad);background:rgba(255,127,112,.14)}
+.opt:disabled{cursor:default;color:var(--ink)}
+.why{font-size:14px;margin-top:6px;color:var(--muted)}
+
+/* loading: a train running down the line */
+.loading{padding:18px 0 8px}
+.track{position:relative;height:6px;background:rgba(220,230,255,.15);overflow:hidden}
+.track i{position:absolute;top:0;left:-30%;width:30%;height:100%;background:var(--signal);animation:run 1.4s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes run{to{left:100%}}
+.loading p{font-family:var(--mono);font-size:12px;color:var(--muted);margin:8px 0 0}
+@media (prefers-reduced-motion:reduce){.track i{animation:none;left:0;width:100%;opacity:.4}}
+
+/* pager */
+.pager{background:#07122F;color:#E8EEFF;padding:14px;border:1px solid var(--bad);border-left:5px solid var(--bad);font-family:var(--mono);font-size:14px}
+.pager .top{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;gap:8px}
+.pager .al{font-size:16px;font-weight:600;margin:6px 0;color:#fff}
+.metrics{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.metric{border:1px solid rgba(220,230,255,.2);padding:4px 8px;font-size:11px}
+.metric b{display:block;font-size:15px}
+.metric.bad b{color:var(--bad)}.metric.warn b{color:var(--warn)}.metric.ok b{color:var(--good)}
+.ctx{margin:10px 0;font-size:15px}
+.outcome{padding:10px 12px;margin:12px 0;border:1px solid}
+.outcome.strong{border-color:var(--good);background:rgba(91,227,161,.1)}
+.outcome.partial{border-color:var(--warn);background:rgba(255,201,77,.1)}
+.outcome.wrong{border-color:var(--bad);background:rgba(255,127,112,.1)}
+.outcome b{font-family:var(--mono);text-transform:uppercase;font-size:11px;letter-spacing:.1em}
+.outcome.strong > b{color:var(--good)}.outcome.partial > b{color:var(--warn)}.outcome.wrong > b{color:var(--bad)}
+.outcome .why{color:var(--ink)}
+.rounds{display:flex;gap:4px;margin-bottom:10px}
+.rounds i{flex:1;height:4px;background:rgba(220,230,255,.15)}
+.rounds i.done{background:var(--signal)}
+
+/* teach */
+.bubble{background:var(--deep);border:1px solid var(--ink);border-radius:12px 12px 12px 0;padding:10px 14px;margin:10px 0;max-width:60ch}
+.bubble .who{font-family:var(--mono);font-size:11px;color:var(--signal);text-transform:uppercase;letter-spacing:.08em}
+textarea{width:100%;min-height:120px;border:1px solid var(--rule);padding:10px;font:inherit;background:var(--deep);color:var(--ink);resize:vertical}
+textarea::placeholder{color:var(--dim)}
+.score{display:flex;gap:6px;margin:10px 0}
+.score i{width:40px;height:10px;background:rgba(220,230,255,.15)}
+.score i.on{background:var(--good)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:14px}
+.cols ul{margin:4px 0 0;padding-left:18px}
+@media (max-width:480px){.cols{grid-template-columns:1fr}.modes .d{display:none}}
+details{margin-top:10px}
+summary{cursor:pointer;font-weight:700}
+
+/* today / arcade */
+.sect{margin:24px 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px dashed var(--rule);padding-bottom:6px}
+.sect h2{font-size:24px;letter-spacing:.05em}
+.card{background:var(--card);border:1px solid var(--rule);padding:12px 14px;margin-bottom:8px}
+.rev .k{font-weight:700}
+.rev .n{font-size:14px;margin:6px 0 8px}
+.sugg a{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.sugg .rd{width:32px;height:32px;background:var(--c);color:var(--on);display:grid;place-items:center;font-family:var(--display);font-weight:700;flex:none;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.quest .bar{margin:8px 0 0}
+.quest .bar i{background:var(--good)}
+.games{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:520px){.games{grid-template-columns:1fr}}
+.game{text-align:left;background:var(--card);border:1px solid var(--rule);padding:12px}
+.game[aria-pressed="true"]{border-color:var(--signal);background:var(--deep);box-shadow:inset 0 -3px 0 var(--signal)}
+.game .t{font-family:var(--display);font-size:20px;font-weight:700;line-height:1;text-transform:uppercase}
+.game .d{font-size:13px;color:var(--muted);margin-top:4px}
+.game .best{font-family:var(--mono);font-size:12px;margin-top:6px;color:var(--signal)}
+.ladder{display:grid;gap:6px}
+.lad{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;background:rgba(11,28,74,.45);border:1px solid var(--rule);padding:10px 12px}
+.lad .ord{font-family:var(--mono);font-weight:600;width:22px;height:22px;display:grid;place-items:center;border:1px solid var(--dim);font-size:12px;flex:none}
+.lad.picked{border-color:var(--signal)}
+.lad.picked .ord{background:var(--signal);color:var(--deep);border-color:var(--signal)}
+.lbar{display:grid;grid-template-columns:minmax(0,1fr);gap:3px;margin-bottom:10px;font-size:13px}
+.lbar .bx{height:10px;background:#8EC5FF;min-width:4px}
+.lbar .v{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.lbar.miss .bx{background:var(--bad)}
+
+/* dock */
+nav.dock{position:fixed;left:0;right:0;bottom:0;background:var(--deep);border-top:1px solid var(--ink);display:flex;justify-content:center;gap:4px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:10}
+nav.dock a{flex:1;max-width:180px;text-align:center;text-decoration:none;color:var(--muted);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;padding:8px 2px}
+nav.dock a[aria-current="page"]{background:var(--signal);color:var(--deep)}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);background:var(--signal);color:var(--deep);font-family:var(--mono);font-weight:600;font-size:14px;padding:10px 16px;opacity:0;transition:.25s;z-index:20;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.aiStatus{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:14px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap"><main id="view" aria-live="polite"></main><p class="aiStatus" id="aiStatus"></p></div>
+<nav class="dock" aria-label="Main">
+  <a href="#map" data-nav="map">Map</a>
+  <a href="#today" data-nav="today">Today</a>
+  <a href="#arcade" data-nav="arcade">Arcade</a>
+  <a href="#profile" data-nav="profile">Profile</a>
+</nav>
+<div class="toast" id="toast" role="status"></div>
+
+<script type="text/plain" id="roadmap">SYSTEM DESIGN ROADMAP
+│
+├── 1. Computer Science Fundamentals
+│   ├── How the Internet Works
+│   ├── Client-Server Architecture
+│   ├── HTTP & HTTPS
+│   ├── DNS (Domain Name System)
+│   ├── TCP & UDP
+│   ├── IP Addresses & Ports
+│   ├── OSI Model
+│   ├── Network Protocols
+│   ├── REST Architecture
+│   ├── WebSockets
+│   ├── Operating System Fundamentals
+│   ├── Processes & Threads
+│   ├── Concurrency & Parallelism
+│   ├── Memory Management
+│   ├── CPU & I/O Basics
+│   └── Linux Fundamentals
+│
+├── 2. System Design Fundamentals
+│   ├── What is System Design?
+│   ├── What is Software Architecture?
+│   ├── Monolithic Architecture
+│   ├── Microservices Architecture
+│   ├── Service-Oriented Architecture (SOA)
+│   ├── Client-Server Architecture
+│   ├── Three-Tier Architecture
+│   ├── Layered Architecture
+│   ├── Event-Driven Architecture
+│   ├── Serverless Architecture
+│   ├── Distributed Systems Basics
+│   ├── Stateful vs Stateless Systems
+│   ├── Synchronous vs Asynchronous Communication
+│   └── Architectural Trade-offs
+│
+├── 3. Requirements & Design Fundamentals
+│   ├── Functional Requirements
+│   ├── Non-Functional Requirements
+│   ├── Scalability
+│   ├── Availability
+│   ├── Reliability
+│   ├── Maintainability
+│   ├── Fault Tolerance
+│   ├── Performance
+│   ├── Latency & Throughput
+│   ├── Consistency
+│   ├── Durability
+│   ├── Security
+│   ├── Capacity Estimation
+│   ├── Back-of-the-Envelope Calculations
+│   ├── Traffic Estimation
+│   ├── Storage Estimation
+│   └── Bandwidth Estimation
+│
+├── 4. Networking & Communication
+│   ├── HTTP Methods
+│   ├── HTTP Status Codes
+│   ├── HTTP Headers
+│   ├── Cookies & Sessions
+│   ├── TLS / SSL
+│   ├── REST APIs
+│   ├── GraphQL
+│   ├── gRPC
+│   ├── WebSockets
+│   ├── Server-Sent Events (SSE)
+│   ├── Long Polling
+│   ├── API Versioning
+│   ├── API Rate Limiting
+│   ├── Connection Pooling
+│   └── Keep-Alive Connections
+│
+├── 5. Database Fundamentals
+│   ├── Relational Databases
+│   │   ├── PostgreSQL
+│   │   ├── MySQL
+│   │   ├── Tables & Relationships
+│   │   ├── Primary & Foreign Keys
+│   │   ├── Indexing
+│   │   ├── B-Tree & B+ Tree
+│   │   ├── Query Optimization
+│   │   ├── Joins
+│   │   ├── Transactions
+│   │   ├── ACID Properties
+│   │   └── Normalization & Denormalization
+│   ├── NoSQL Databases
+│   │   ├── Document Databases
+│   │   ├── Key-Value Stores
+│   │   ├── Wide-Column Stores
+│   │   ├── Graph Databases
+│   │   └── MongoDB / Cassandra / DynamoDB
+│   ├── Database Internals
+│   │   ├── Storage Engines
+│   │   ├── Write-Ahead Logging (WAL)
+│   │   ├── MVCC
+│   │   ├── Locking
+│   │   └── Isolation Levels
+│   └── Database Design Decisions
+│       ├── SQL vs NoSQL
+│       ├── Schema Design
+│       ├── Read-Heavy vs Write-Heavy Workloads
+│       └── Data Modeling
+│
+├── 6. Caching
+│   ├── What is Caching?
+│   ├── Cache Hierarchy
+│   ├── Client-Side Caching
+│   ├── Browser Caching
+│   ├── CDN Caching
+│   ├── Application-Level Caching
+│   ├── Database Caching
+│   ├── Redis
+│   ├── Memcached
+│   ├── Cache-Aside Pattern
+│   ├── Read-Through Cache
+│   ├── Write-Through Cache
+│   ├── Write-Back Cache
+│   ├── Cache Invalidation
+│   ├── TTL (Time To Live)
+│   ├── Cache Eviction Policies
+│   │   ├── LRU
+│   │   ├── LFU
+│   │   └── FIFO
+│   ├── Cache Stampede
+│   └── Distributed Caching
+│
+├── 7. Load Balancing & Traffic Management
+│   ├── What is Load Balancing?
+│   ├── Layer 4 vs Layer 7 Load Balancing
+│   ├── Reverse Proxy
+│   ├── Forward Proxy
+│   ├── Nginx
+│   ├── HAProxy
+│   ├── Cloud Load Balancers
+│   ├── Round Robin
+│   ├── Least Connections
+│   ├── IP Hash
+│   ├── Consistent Hashing
+│   ├── Health Checks
+│   ├── Sticky Sessions
+│   ├── Horizontal Scaling
+│   ├── Vertical Scaling
+│   └── Auto Scaling
+│
+├── 8. Distributed Systems Fundamentals
+│   ├── What is a Distributed System?
+│   ├── Distributed System Challenges
+│   ├── CAP Theorem
+│   ├── PACELC Theorem
+│   ├── Consistency Models
+│   │   ├── Strong Consistency
+│   │   ├── Eventual Consistency
+│   │   ├── Causal Consistency
+│   │   └── Read-Your-Writes Consistency
+│   ├── Replication
+│   │   ├── Leader-Follower Replication
+│   │   ├── Multi-Leader Replication
+│   │   └── Leaderless Replication
+│   ├── Sharding & Partitioning
+│   ├── Data Replication Strategies
+│   ├── Distributed Transactions
+│   ├── Two-Phase Commit (2PC)
+│   ├── Consensus Algorithms
+│   │   ├── Paxos
+│   │   └── Raft
+│   ├── Split Brain Problem
+│   ├── Quorum
+│   ├── Distributed Locking
+│   ├── Clock Synchronization
+│   └── Idempotency
+│
+├── 9. Message Queues & Event Streaming
+│   ├── Message Queue Fundamentals
+│   ├── Synchronous vs Asynchronous Processing
+│   ├── Producer-Consumer Pattern
+│   ├── Message Brokers
+│   ├── RabbitMQ
+│   ├── Apache Kafka
+│   ├── Redis Streams
+│   ├── Amazon SQS
+│   ├── Publish-Subscribe Pattern
+│   ├── Event-Driven Architecture
+│   ├── Topics & Partitions
+│   ├── Consumer Groups
+│   ├── Message Ordering
+│   ├── Delivery Guarantees
+│   │   ├── At-Most-Once
+│   │   ├── At-Least-Once
+│   │   └── Exactly-Once Semantics
+│   ├── Dead Letter Queues
+│   ├── Retry Mechanisms
+│   ├── Event Replay
+│   └── Event Sourcing
+│
+├── 10. Scalability & Performance
+│   ├── Horizontal vs Vertical Scaling
+│   ├── Stateless Services
+│   ├── Database Scaling
+│   ├── Read Replicas
+│   ├── Database Sharding
+│   ├── Partitioning Strategies
+│   ├── Connection Pooling
+│   ├── Query Optimization
+│   ├── CDN & Edge Computing
+│   ├── Data Compression
+│   ├── Pagination
+│   ├── Batching
+│   ├── Rate Limiting
+│   ├── Load Shedding
+│   ├── Backpressure
+│   ├── Hotspot Mitigation
+│   └── Performance Bottleneck Analysis
+│
+├── 11. Reliability & Fault Tolerance
+│   ├── Fault Tolerance Fundamentals
+│   ├── Redundancy
+│   ├── High Availability
+│   ├── Failover Strategies
+│   ├── Active-Active Architecture
+│   ├── Active-Passive Architecture
+│   ├── Circuit Breaker Pattern
+│   ├── Retry Pattern
+│   ├── Exponential Backoff
+│   ├── Timeout Management
+│   ├── Bulkhead Pattern
+│   ├── Graceful Degradation
+│   ├── Health Checks
+│   ├── Disaster Recovery
+│   ├── Backup & Restore
+│   ├── RPO & RTO
+│   └── Chaos Engineering
+│
+├── 12. Microservices Architecture
+│   ├── Monolith vs Microservices
+│   ├── Service Decomposition
+│   ├── Domain-Driven Design (DDD)
+│   ├── Bounded Contexts
+│   ├── Service Discovery
+│   ├── API Gateway
+│   ├── Backend for Frontend (BFF)
+│   ├── Inter-Service Communication
+│   ├── Synchronous Communication
+│   ├── Asynchronous Communication
+│   ├── Database Per Service
+│   ├── Saga Pattern
+│   ├── CQRS
+│   ├── Event Sourcing
+│   ├── Distributed Tracing
+│   ├── Service Mesh
+│   ├── Sidecar Pattern
+│   └── Microservices Deployment Strategies
+│
+├── 13. System Design Patterns
+│   ├── Singleton Pattern
+│   ├── Factory Pattern
+│   ├── Observer Pattern
+│   ├── Strategy Pattern
+│   ├── Adapter Pattern
+│   ├── Decorator Pattern
+│   ├── Repository Pattern
+│   ├── Dependency Injection
+│   ├── API Gateway Pattern
+│   ├── Strangler Fig Pattern
+│   ├── Sidecar Pattern
+│   ├── Ambassador Pattern
+│   ├── CQRS Pattern
+│   ├── Saga Pattern
+│   ├── Outbox Pattern
+│   ├── Retry Pattern
+│   ├── Circuit Breaker Pattern
+│   └── Bulkhead Pattern
+│
+├── 14. Security in System Design
+│   ├── Authentication & Authorization
+│   ├── OAuth 2.0
+│   ├── OpenID Connect
+│   ├── JWT
+│   ├── Session-Based Authentication
+│   ├── Role-Based Access Control (RBAC)
+│   ├── Attribute-Based Access Control (ABAC)
+│   ├── Encryption at Rest
+│   ├── Encryption in Transit
+│   ├── TLS
+│   ├── Password Hashing
+│   ├── API Security
+│   ├── Rate Limiting & DDoS Protection
+│   ├── SQL Injection
+│   ├── Cross-Site Scripting (XSS)
+│   ├── CSRF
+│   ├── Secrets Management
+│   ├── Zero Trust Architecture
+│   └── Audit Logging
+│
+├── 15. Observability & Monitoring
+│   ├── Logging
+│   ├── Metrics
+│   ├── Distributed Tracing
+│   ├── OpenTelemetry
+│   ├── Prometheus
+│   ├── Grafana
+│   ├── ELK Stack
+│   ├── Alerting
+│   ├── Health Monitoring
+│   ├── SLI / SLO / SLA
+│   ├── Error Budgets
+│   ├── Latency Monitoring
+│   ├── Throughput Monitoring
+│   ├── Root Cause Analysis
+│   └── Incident Management
+│
+├── 16. Cloud & Infrastructure
+│   ├── Cloud Computing Fundamentals
+│   ├── AWS / GCP / Azure
+│   ├── Compute Services
+│   ├── Storage Services
+│   ├── Managed Databases
+│   ├── Virtual Private Cloud (VPC)
+│   ├── DNS & Networking in Cloud
+│   ├── Object Storage (S3)
+│   ├── Containers
+│   ├── Docker
+│   ├── Kubernetes
+│   ├── Container Orchestration
+│   ├── Infrastructure as Code
+│   │   ├── Terraform
+│   │   └── CloudFormation
+│   ├── CI/CD Pipelines
+│   ├── Blue-Green Deployment
+│   ├── Canary Deployment
+│   ├── Rolling Deployment
+│   └── Serverless Infrastructure
+│
+├── 17. Storage Systems & File Architecture
+│   ├── Block Storage
+│   ├── File Storage
+│   ├── Object Storage
+│   ├── Distributed File Systems
+│   ├── Content Delivery Networks
+│   ├── File Upload Architecture
+│   ├── Multipart Upload
+│   ├── Resumable Uploads
+│   ├── Data Deduplication
+│   ├── Compression
+│   ├── Data Retention
+│   ├── Backup Strategies
+│   ├── Blob Storage
+│   └── Metadata Management
+│
+├── 18. Real-Time Systems
+│   ├── WebSockets
+│   ├── Server-Sent Events
+│   ├── Long Polling
+│   ├── Real-Time Notifications
+│   ├── Presence Systems
+│   ├── Heartbeats
+│   ├── Live Chat Architecture
+│   ├── Real-Time Collaboration
+│   ├── Pub/Sub Architecture
+│   ├── Fan-Out Strategies
+│   ├── Online Gaming Architecture
+│   └── Real-Time Data Processing
+│
+├── 19. Advanced Distributed Systems
+│   ├── Distributed Hash Tables
+│   ├── Consistent Hashing
+│   ├── Gossip Protocol
+│   ├── Merkle Trees
+│   ├── Vector Clocks
+│   ├── Lamport Clocks
+│   ├── CRDTs
+│   ├── Distributed Snapshots
+│   ├── Leader Election
+│   ├── Log Replication
+│   ├── Stream Processing
+│   ├── Apache Flink
+│   ├── Apache Spark
+│   ├── Data Locality
+│   ├── Multi-Region Architecture
+│   ├── Geo-Replication
+│   └── Global Traffic Management
+│
+├── 20. Low-Level Design (LLD)
+│   ├── Object-Oriented Design
+│   ├── SOLID Principles
+│   ├── DRY / KISS / YAGNI
+│   ├── UML Class Diagrams
+│   ├── Sequence Diagrams
+│   ├── State Diagrams
+│   ├── Class Relationships
+│   ├── Composition vs Inheritance
+│   ├── Interfaces & Abstractions
+│   ├── Design Patterns
+│   ├── Extensibility & Maintainability
+│   ├── Concurrency in LLD
+│   ├── Thread Safety
+│   └── Common LLD Problems
+│       ├── Parking Lot
+│       ├── Library Management System
+│       ├── Elevator System
+│       ├── Splitwise
+│       ├── BookMyShow
+│       ├── Chess
+│       └── Food Delivery System
+│
+├── 21. High-Level Design (HLD)
+│   ├── Requirement Gathering
+│   ├── Functional & Non-Functional Requirements
+│   ├── API Design
+│   ├── Database Schema Design
+│   ├── Capacity Estimation
+│   ├── Component Diagrams
+│   ├── Data Flow Diagrams
+│   ├── Architecture Diagrams
+│   ├── Bottleneck Identification
+│   ├── Scaling Strategies
+│   ├── Reliability & Fault Tolerance
+│   ├── Security Considerations
+│   ├── Trade-off Analysis
+│   ├── Architecture Documentation
+│   └── End-to-End System Design
+│
+├── 22. System Design Case Studies
+│   ├── URL Shortener (TinyURL)
+│   ├── Pastebin
+│   ├── Rate Limiter
+│   ├── Notification System
+│   ├── News Feed (Facebook / Instagram)
+│   ├── Chat Application (WhatsApp)
+│   ├── Video Streaming (YouTube / Netflix)
+│   ├── Ride-Hailing (Uber)
+│   ├── Food Delivery (Swiggy / Zomato)
+│   ├── E-Commerce (Amazon)
+│   ├── Payment System
+│   ├── Search Engine
+│   ├── File Storage (Google Drive / Dropbox)
+│   ├── Ticket Booking (BookMyShow)
+│   ├── Social Media Platform (X)
+│   ├── Recommendation System
+│   ├── Distributed Cache (Redis)
+│   ├── Logging & Monitoring Platform
+│   ├── Web Crawler
+│   └── Video Conferencing System
+│
+├── 23. System Design Tools & Technologies
+│   ├── Programming Languages
+│   │   ├── Go
+│   │   ├── Java
+│   │   └── Python
+│   ├── Databases
+│   │   ├── PostgreSQL
+│   │   ├── MySQL
+│   │   ├── Redis
+│   │   ├── MongoDB
+│   │   └── Cassandra
+│   ├── Message Brokers
+│   │   ├── Kafka
+│   │   └── RabbitMQ
+│   ├── Networking & Proxy
+│   │   ├── Nginx
+│   │   └── HAProxy
+│   ├── Infrastructure
+│   │   ├── Docker
+│   │   ├── Kubernetes
+│   │   └── Terraform
+│   ├── Monitoring
+│   │   ├── Prometheus
+│   │   ├── Grafana
+│   │   └── OpenTelemetry
+│   ├── API Testing
+│   │   ├── Postman
+│   │   └── curl
+│   └── Architecture Documentation
+│       ├── Excalidraw
+│       ├── Draw.io
+│       └── Mermaid
+│
+├── 24. System Design Practice
+│   ├── Design Small Systems First
+│   ├── Design a URL Shortener
+│   ├── Design a Rate Limiter
+│   ├── Design a Notification Service
+│   ├── Design a Chat Application
+│   ├── Design a News Feed
+│   ├── Design a Video Streaming Platform
+│   ├── Design a Ride-Hailing Platform
+│   ├── Design a Payment Service
+│   ├── Design a Distributed Cache
+│   ├── Design a Search Engine
+│   ├── Design a File Storage Service
+│   ├── Design a Ticket Booking System
+│   ├── Design a Real-Time Analytics System
+│   ├── Document Design Decisions
+│   ├── Identify Trade-offs
+│   ├── Review Existing Architectures
+│   └── Build End-to-End Projects
+│
+└── 25. Mastery & Career Preparation
+    ├── Architectural Thinking
+    ├── Breaking Down Complex Problems
+    ├── Requirement Analysis
+    ├── Capacity Estimation
+    ├── Identifying Bottlenecks
+    ├── Choosing the Right Components
+    ├── Scalability Trade-offs
+    ├── Reliability Engineering
+    ├── Distributed Systems Thinking
+    ├── Cost Optimization
+    ├── Security-First Design
+    ├── Architecture Reviews
+    ├── Technical Documentation
+    ├── System Design Interviews
+    ├── Mock Design Interviews
+    ├── Real-World Production Experience
+    └── Continuous Learning
+
+FINAL GOAL:
+Become an Exceptional System Designer
+│
+├── Design Scalable Applications
+├── Build Reliable Distributed Systems
+├── Understand Large-Scale Architectures
+├── Make Strong Engineering Trade-offs
+└── Design Systems Used by Millions of Users</script>
+<script>
+(function(){
+"use strict";
+/* ================= data ================= */
+const RAW = document.getElementById('roadmap').textContent;
+const PHASES = {
+  F:{n:'Foundations',c:'#FF9A85',on:'#0B1C4A'}, D:{n:'Data',c:'#FFD27A',on:'#0B1C4A'},
+  S:{n:'Scale',c:'#7EE8B0',on:'#0B1C4A'}, X:{n:'Distributed',c:'#9FD0FF',on:'#0B1C4A'},
+  O:{n:'Operations',c:'#C9AEFF',on:'#0B1C4A'}, A:{n:'Architecture',c:'#6FE3E3',on:'#0B1C4A'},
+  C:{n:'Craft',c:'#FFA8D8',on:'#0B1C4A'}
+};
+const SEC_PHASE = {1:'F',2:'F',3:'F',4:'F',5:'D',6:'D',7:'S',8:'X',9:'X',10:'S',11:'O',12:'A',13:'A',14:'A',15:'O',16:'O',17:'O',18:'A',19:'X',20:'C',21:'C',22:'C',23:'C',24:'C',25:'C'};
+const HOOKS = {
+ 1:'Packets, ports and processes: what actually happens under every request.',
+ 2:'The shapes software takes, and why each one exists.',
+ 3:'Turning "it should be fast" into numbers you can design against.',
+ 4:'How services talk: protocols, APIs and the cost of every hop.',
+ 5:'Where truth lives, and how it stays true under load.',
+ 6:'Remembering answers so you never compute them twice.',
+ 7:'Spreading traffic so no single box becomes the bottleneck.',
+ 8:'Many machines acting as one, and what that costs you.',
+ 9:'Decoupling producers from consumers with queues and logs.',
+ 10:'Find the bottleneck, then move it somewhere cheaper.',
+ 11:'Designing for the failure that will certainly happen.',
+ 12:'Splitting a system along business boundaries.',
+ 13:'Named solutions to problems that keep coming back.',
+ 14:'Who you are, what you may do, and keeping secrets secret.',
+ 15:'Seeing inside a running system before users tell you.',
+ 16:'Where the system runs and how code gets there.',
+ 17:'Bytes at rest: blocks, files, objects and their metadata.',
+ 18:'Pushing updates to users the moment they happen.',
+ 19:'Clocks, gossip and the deep mechanics of distributed state.',
+ 20:'Classes, contracts and code that survives change.',
+ 21:'From a vague prompt to a defended architecture.',
+ 22:'Real systems, taken apart end to end.',
+ 23:'The tools you name in a design and actually run.',
+ 24:'Reps: design, defend, repeat.',
+ 25:'Thinking like the architect in the room.'
+};
+
+function norm(s){return s.toLowerCase().replace(/\s+pattern$/,'').replace(/[^a-z0-9]+/g,' ').trim();}
+function parse(raw){
+  const sections=[]; const goals=[]; let cur=null; let inGoal=false; const lastAt={};
+  for(const ln of raw.split('\n')){
+    if(/^FINAL GOAL/.test(ln)){inGoal=true;continue;}
+    const m = ln.match(/^([│ ]*)(├── |└── )(.*)$/);
+    if(!m) continue;
+    const depth = Math.round(m[1].length/4);
+    const name = m[3].trim();
+    if(inGoal){ if(depth===0) goals.push(name); continue; }
+    if(depth===0){
+      const sm = name.match(/^(\d+)\.\s*(.*)$/);
+      if(!sm) continue;
+      cur={n:+sm[1],name:sm[2],stops:[]}; sections.push(cur);
+      continue;
+    }
+    if(!cur) continue;
+    const stop={name,depth,idx:cur.stops.length,sec:cur.n,key:norm(name),parent:depth>1?lastAt[depth-1]:null,kids:0};
+    if(stop.parent) stop.parent.kids++;
+    cur.stops.push(stop); lastAt[depth]=stop;
+  }
+  return {sections,goals};
+}
+const {sections:SECS, goals:GOALS} = parse(RAW);
+const SEC = {}; SECS.forEach(s=>{SEC[s.n]=s; const p=PHASES[SEC_PHASE[s.n]||'C']; s.c=p.c; s.on=p.on; s.phase=p.n;});
+const KEYLOC = {}; // key -> [{sec,idx}]
+SECS.forEach(s=>s.stops.forEach(t=>{(KEYLOC[t.key]=KEYLOC[t.key]||[]).push({sec:s.n,idx:t.idx});}));
+const ALLKEYS = Object.keys(KEYLOC);
+const TOTAL_STOPS = SECS.reduce((a,s)=>a+s.stops.length,0);
+
+/* ================= accounts (stored on this device only) ================= */
+const NATIVE = window.SDMNative || null;
+const AK='sdm.accounts', SK='sdm.session', KK='sdm.apikey';
+const MODELS={quick:'claude-haiku-5-5', default:'claude-sonnet-5-5'};
+function lsGet(k,d){try{const v=localStorage.getItem(k); return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v)); return true;}catch(e){return false;}}
+function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+let ACC=lsGet(AK,{}), ME=null;
+function randHex(n){const a=new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a).map(b=>b.toString(16).padStart(2,'0')).join('');}
+async function hashPw(pw,salt){
+  if(NATIVE&&NATIVE.hash){ const h=NATIVE.hash(pw,salt); if(h) return h; throw new Error('hash failed'); }
+  const enc=new TextEncoder();
+  const sb=new Uint8Array(salt.match(/../g).map(x=>parseInt(x,16)));
+  const key=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:sb,iterations:120000},key,256);
+  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+/* ================= state ================= */
+let LS='sdm.v1';
+const blank=()=>({v:1,xp:0,days:[],daily:{},pips:{},rev:{},notes:{},last:null,arcade:{},updated:0});
+let S=blank();
+function loadState(){S=blank(); try{const j=JSON.parse(localStorage.getItem(LS)||'null'); if(j&&j.v===1) S=Object.assign(blank(),j);}catch(e){}}
+
+function merge(a,b){
+  const o=blank();
+  o.xp=Math.max(a.xp||0,b.xp||0);
+  o.days=[...new Set([...(a.days||[]),...(b.days||[])])].sort();
+  o.daily=Object.assign({},b.daily,a.daily); for(const d in b.daily) o.daily[d]=Math.max(o.daily[d]||0,b.daily[d]);
+  const keys=new Set([...Object.keys(a.pips||{}),...Object.keys(b.pips||{})]);
+  keys.forEach(k=>{const x=(a.pips||{})[k]||{},y=(b.pips||{})[k]||{};o.pips[k]={};['e','i','t'].forEach(p=>{const v=Math.max(x[p]||0,y[p]||0); if(v) o.pips[k][p]=v;});});
+  const rk=new Set([...Object.keys(a.rev||{}),...Object.keys(b.rev||{})]);
+  rk.forEach(k=>{const x=(a.rev||{})[k],y=(b.rev||{})[k]; o.rev[k]=!x?y:!y?x:(x.at>=y.at?x:y);});
+  o.notes=Object.assign({},b.notes,a.notes);
+  o.arcade=Object.assign({},b.arcade); for(const g in (a.arcade||{})) o.arcade[g]=Math.max(o.arcade[g]||0,a.arcade[g]);
+  const newer=(a.updated||0)>=(b.updated||0)?a:b; o.last=newer.last||a.last||b.last;
+  o.updated=Math.max(a.updated||0,b.updated||0);
+  return o;
+}
+
+let DB=null, UID=null, writing=false, dirty=false, wTimer=null;
+function save(){
+  S.updated=Date.now();
+  try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}
+  dirty=true; clearTimeout(wTimer); wTimer=setTimeout(flush,1500);
+}
+async function flush(){
+  if(!DB||!UID||writing||!dirty) return;
+  writing=true; dirty=false;
+  try{ await DB.doc('data/users/'+UID+'/progress').set(JSON.parse(JSON.stringify(S))); }
+  catch(e){ if(e&&e.code==='unavailable'){dirty=true;} else {DB=null;} }
+  writing=false; if(dirty) wTimer=setTimeout(flush,1500);
+}
+
+const today=()=>new Date().toLocaleDateString('en-CA');
+const DAY=86400000, INTERVALS=[1,3,7,16,35,80];
+function pipsOf(k){return S.pips[k]||{};}
+function pipCount(k){const p=pipsOf(k);return (p.e?1:0)+(p.i?1:0)+(p.t?1:0);}
+function touchDay(){const d=today(); if(!S.days.includes(d)) S.days.push(d); S.daily[d]=(S.daily[d]||0)+1;}
+function award(key,pip,xp,label){
+  const p=S.pips[key]=S.pips[key]||{}; const fresh=!p[pip];
+  if(fresh){p[pip]=Date.now(); if(!S.rev[key]) S.rev[key]={n:0,at:Date.now()};}
+  const gain=fresh?xp:5; S.xp+=gain; touchDay(); save();
+  toast('+'+gain+' XP · '+label);
+}
+function addXP(n,label){S.xp+=n; touchDay(); save(); toast('+'+n+' XP · '+label);}
+function streak(){
+  const set=new Set(S.days); let d=new Date(); let n=0;
+  if(!set.has(d.toLocaleDateString('en-CA'))) d=new Date(Date.now()-DAY);
+  while(set.has(d.toLocaleDateString('en-CA'))){n++; d=new Date(d.getTime()-DAY);}
+  return n;
+}
+const RANKS=[[0,'Commuter'],[200,'Regular'],[600,'Line Inspector'],[1500,'Station Master'],[3500,'Network Planner'],[7000,'Chief Architect']];
+function rank(){let i=0; RANKS.forEach((r,j)=>{if(S.xp>=r[0]) i=j;}); const nx=RANKS[i+1]; return {name:RANKS[i][1],next:nx?nx[1]:null,pct:nx?Math.round((S.xp-RANKS[i][0])/(nx[0]-RANKS[i][0])*100):100,need:nx?nx[0]-S.xp:0};}
+function mastered(){return ALLKEYS.filter(k=>pipCount(k)===3).length;}
+function touched(){return ALLKEYS.filter(k=>pipCount(k)>0).length;}
+function secProgress(s){const ks=[...new Set(s.stops.map(t=>t.key))]; let got=0; ks.forEach(k=>got+=pipCount(k)); return ks.length?got/(ks.length*3):0;}
+
+/* ================= utils ================= */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+let tT=null; function toast(m){const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(()=>t.classList.remove('show'),1800);}
+function pipsHTML(k){const p=pipsOf(k);return `<span class="pips" aria-label="${pipCount(k)} of 3 modes done"><i class="e ${p.e?'on':''}" title="Ride"></i><i class="i ${p.i?'on':''}" title="Pager"></i><i class="t ${p.t?'on':''}" title="Teach"></i></span>`;}
+function others(t){return (KEYLOC[t.key]||[]).filter(l=>!(l.sec===t.sec&&l.idx===t.idx));}
+
+/* ================= Claude ================= */
+let SAMPLE=null, AI_STATE='waiting';
+function setAI(st){AI_STATE=st; const el=$('#aiStatus');
+  el.textContent = !ME ? '' : st==='on' ? 'Claude key connected: Ride, Pager and Teach are live.' : 'Add your Anthropic API key in Profile to switch on Ride, Pager and Teach. Map, reviews and Arcade work offline.';
+}
+async function askJSON(prompt,opts){
+  if(!SAMPLE) throw {code:'not_granted'};
+  const full='Reply with ONLY one JSON object. No prose before or after, no code fences.\n\n'+prompt;
+  const o=Object.assign({modelTier:'default'},opts||{});
+  if(typeof SAMPLE.json==='function'){
+    try{ const v=await SAMPLE.json(full,o); if(v&&typeof v==='object') return v; }
+    catch(e){ if(e&&e.code&&e.code!=='parse_error') throw e; }
+  }
+  const r=await SAMPLE(full,o); const txt=(r&&r.text)||'';
+  const a=txt.indexOf('{'), b=txt.lastIndexOf('}');
+  if(a<0||b<a) throw {code:'bad_output',message:'Claude replied in an unexpected format.'};
+  return JSON.parse(txt.slice(a,b+1));
+}
+function errText(e){
+  const c=e&&e.code;
+  if(c==='not_granted') return 'This mode needs your Anthropic API key. Add it in <a href="#profile" style="color:inherit">Profile</a>.';
+  if(c==='bad_key') return 'Anthropic rejected the API key. Check it in <a href="#profile" style="color:inherit">Profile</a>.';
+  if(c==='offline') return 'No internet connection. This mode needs to reach Claude; the Arcade and reviews work offline.';
+  if(c==='rate_limited'||c==='resource_exhausted') return 'Claude is busy right now. Wait a minute, then try again.';
+  return 'That run did not come through ('+esc((e&&e.message)||c||'unknown error')+'). Try again.';
+}
+function loadingHTML(msg){return `<div class="loading"><div class="track"><i></i></div><p>${esc(msg)}</p></div>`;}
+function ctxOf(t){const s=SEC[t.sec]; return `the topic "${t.name}" from the system design roadmap section "${s.name}"${t.parent?`, under "${t.parent.name}"`:''}`;}
+
+/* ================= router ================= */
+const UI={mode:{}, ride:{}, pager:{}, teach:{}, lens:'plain', game:null};
+function route(){
+  const h=(location.hash||'#map').slice(1);
+  let m;
+  document.querySelector('nav.dock').hidden=!ME;
+  if(!ME) return renderAuth();
+  document.querySelectorAll('nav.dock a').forEach(a=>a.removeAttribute('aria-current'));
+  const navKey = h.startsWith('today')?'today':h.startsWith('arcade')?'arcade':h.startsWith('profile')?'profile':'map';
+  const cur=document.querySelector(`nav.dock a[data-nav="${navKey}"]`); if(cur) cur.setAttribute('aria-current','page');
+  if((m=h.match(/^line-(\d+)$/))&&SEC[+m[1]]) return renderLine(SEC[+m[1]]);
+  if((m=h.match(/^stop-(\d+)-(\d+)$/))&&SEC[+m[1]]&&SEC[+m[1]].stops[+m[2]]) return renderStop(SEC[+m[1]].stops[+m[2]]);
+  if(h==='today') return renderToday();
+  if(h==='arcade') return renderArcade();
+  if(h==='profile') return renderProfile();
+  return renderMap();
+}
+window.addEventListener('hashchange',()=>{route(); window.scrollTo(0,0);});
+
+/* ================= MAP ================= */
+function ticketHTML(){
+  const r=rank();
+  return `<div class="ticket">
+    <div><small>XP</small><b class="mono">${S.xp}</b></div>
+    <div><small>Streak</small><b>${streak()}<span style="font-size:15px"> d</span></b></div>
+    <div><small>Mastered</small><b>${mastered()}</b></div>
+    <div><small>Visited</small><b>${touched()}</b></div>
+    <div class="rank"><span>${esc(r.name)}</span><span class="bar"><i style="width:${r.pct}%"></i></span><span class="mono">${r.next?r.need+' to '+esc(r.next):'Top rank'}</span></div>
+  </div>`;
+}
+function renderMap(){
+  const lastSec = S.last?S.last.sec:null;
+  let cont='';
+  if(S.last&&SEC[S.last.sec]&&SEC[S.last.sec].stops[S.last.idx]){
+    const t=SEC[S.last.sec].stops[S.last.idx];
+    cont=`<a class="continue" href="#stop-${t.sec}-${t.idx}" style="text-decoration:none"><span><span class="lbl">Continue at</span><br><span class="nm">${esc(t.name)}</span></span><span class="go">Line ${pad(t.sec)} →</span></a>`;
+  } else {
+    cont=`<a class="continue" href="#stop-1-0" style="text-decoration:none"><span><span class="lbl">First ride</span><br><span class="nm">How the Internet Works</span></span><span class="go">Board →</span></a>`;
+  }
+  const legend=Object.values(PHASES).map(p=>`<span><i style="background:${p.c}"></i>${p.n}</span>`).join('');
+  const items=SECS.map(s=>{
+    const pr=secProgress(s); const deg=Math.round(pr*360);
+    return `<li class="stn" style="--c:${s.c}">
+      <span class="dot"><i style="background:conic-gradient(${s.c} ${deg}deg, var(--card) 0)"></i></span>
+      <a href="#line-${s.n}">
+        <span class="num">LINE ${pad(s.n)}</span>${lastSec===s.n?'<span class="here">You are here</span>':''}
+        <div class="nm">${esc(s.name)}</div>
+        <div class="meta"><span class="zone">${esc(s.phase)}</span><span>${s.stops.length} stops</span><span class="mini"><i style="width:${Math.round(pr*100)}%"></i></span><span class="mono">${Math.round(pr*100)}%</span></div>
+      </a></li>`;
+  }).join('');
+  $('#view').innerHTML=`
+    <header class="mast"><div><h1>System Design <span>Metro</span></h1><div class="sub">${SECS.length} lines · ${TOTAL_STOPS} stops · ${ALLKEYS.length} unique concepts · 1 terminus</div></div></header>
+    ${ticketHTML()}
+    ${cont}
+    <div class="legend">${legend}</div>
+    <ul class="trunk">${items}
+      <li class="stn term" style="--c:var(--signal)"><span class="dot"><i style="background:var(--signal)"></i></span>
+        <div class="terminus"><span class="num" style="color:var(--muted)">TERMINUS</span><h3>Become an Exceptional System Designer</h3><ul>${GOALS.map(g=>`<li>${esc(g)}</li>`).join('')}</ul></div></li>
+    </ul>`;
+}
+
+/* ================= LINE ================= */
+function renderLine(s){
+  const pr=secProgress(s);
+  const rows=s.stops.map(t=>{
+    const ox=others(t); const n=pipCount(t.key);
+    const fill = n===0?'var(--card)': n===3?'var(--ink)':`conic-gradient(var(--ink) ${n*120}deg, var(--card) 0)`;
+    return `<li class="stop d${Math.min(t.depth,3)>1?Math.min(t.depth,3):''}" style="--c:${s.c}">
+      <span class="sd" style="background:${fill}"></span>
+      <a href="#stop-${s.n}-${t.idx}"><span><span class="sn">${esc(t.name)}</span>${ox.length?`<span class="ix" title="Interchange">${[...new Set(ox.map(o=>o.sec))].map(n=>`<b>L${n}</b>`).join('')}</span>`:''}</span>${pipsHTML(t.key)}</a></li>`;
+  }).join('');
+  $('#view').innerHTML=`
+    <a class="back" href="#map">← Network map</a>
+    <section class="lineHead" style="--c:${s.c};--on:${s.on}">
+      <div class="code">LINE ${pad(s.n)} · ${esc(s.phase.toUpperCase())}</div>
+      <h2>${esc(s.name)}</h2><p>${esc(HOOKS[s.n]||'')}</p>
+      <div class="prog"><span class="bar"><i style="width:${Math.round(pr*100)}%"></i></span><span class="mono">${Math.round(pr*100)}% of pips</span></div>
+    </section>
+    <p class="note">Each stop has three pips: <b style="color:#8EC5FF">Ride</b> (understand it), <b style="color:var(--signal)">Pager</b> (survive an incident with it), <b style="color:var(--good)">Teach</b> (explain it back). Black tags like <b class="mono">L9</b> are interchanges: the same concept on another line, sharing your progress.</p>
+    <ul class="stops">${rows}</ul>`;
+}
+
+/* ================= STOP ================= */
+function renderStop(t){
+  const s=SEC[t.sec];
+  S.last={sec:t.sec,idx:t.idx}; try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}
+  const prev=s.stops[t.idx-1], next=s.stops[t.idx+1];
+  const ox=others(t);
+  const mode=UI.mode[t.key]||'ride';
+  const p=pipsOf(t.key);
+  const M=[['ride','Ride','Learn it through a lens',p.e,'#8EC5FF'],['pager','Pager','Survive a 2:47 AM incident',p.i,'var(--signal)'],['teach','Teach','Explain it to a new joiner',p.t,'var(--good)']];
+  $('#view').innerHTML=`
+    <a class="back" href="#line-${s.n}">← Line ${pad(s.n)} · ${esc(s.name)}</a>
+    <div class="sign" style="--c:${s.c};--on:${s.on}"><div class="roundel">${s.n}</div><div><div class="ln">${t.parent?esc(t.parent.name)+' · ':''}Stop ${t.idx+1} of ${s.stops.length}</div><h2>${esc(t.name)}</h2></div></div>
+    <div class="adj">
+      <a class="${prev?'':'off'}" href="${prev?`#stop-${s.n}-${prev.idx}`:'#'}"><span>← Previous</span><strong>${esc(prev?prev.name:'')}</strong></a>
+      <a class="nx ${next?'':'off'}" href="${next?`#stop-${s.n}-${next.idx}`:'#'}"><span>Next →</span><strong>${esc(next?next.name:'')}</strong></a>
+    </div>
+    ${ox.length?`<div class="ichg"><span class="note">Interchange with</span>${ox.map(o=>`<a href="#stop-${o.sec}-${o.idx}">Line ${o.sec} · ${esc(SEC[o.sec].name)}</a>`).join('')}</div>`:''}
+    <div class="modes" role="tablist">${M.map(m=>`<button class="mode" role="tab" aria-selected="${mode===m[0]}" data-mode="${m[0]}"><span class="ok ${m[3]?'on':''}" style="${m[3]?'background:'+m[4]:''}"></span><div class="t">${m[1]}</div><div class="d">${m[2]}</div></button>`).join('')}</div>
+    <section class="panel" id="panel" style="--c:${s.c}"></section>`;
+  document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{UI.mode[t.key]=b.dataset.mode; renderStop(t);});
+  ({ride:paneRide,pager:panePager,teach:paneTeach})[mode](t);
+}
+
+/* ---------- RIDE ---------- */
+const LENSES=[['plain','Straight engineering'],['dabba','Mumbai dabbawalas'],['cricket','A cricket match'],['kitchen','Restaurant kitchen'],['railways','Indian Railways'],['wedding','Big Indian wedding']];
+function cacheKey(k,l){return 'sdm.c.'+k+'.'+l;}
+function paneRide(t){
+  const P=$('#panel'); const st=UI.ride[t.key]||(UI.ride[t.key]={});
+  if(!st.data){ try{const c=localStorage.getItem(cacheKey(t.key,UI.lens)); if(c){st.data=JSON.parse(c); st.lens=UI.lens;}}catch(e){} }
+  const lensChips=LENSES.map(l=>`<button class="chip" aria-pressed="${UI.lens===l[0]}" data-lens="${l[0]}">${esc(l[1])}</button>`).join('');
+  if(st.loading){P.innerHTML=`<h3>Ride</h3>${loadingHTML('Train approaching the platform…')}`;return;}
+  if(!st.data){
+    P.innerHTML=`<h3>Ride</h3><p class="muted" style="margin:0">Pick the world you want this explained through, then board. You get the idea, the real mechanics, the interview trap, a pocket card and a two-question check.</p>
+      <div class="chips" role="group" aria-label="Lens">${lensChips}</div>
+      <button class="btn" id="board">Board the train</button>${st.err?`<div class="err">${st.err}</div>`:''}`;
+    P.querySelectorAll('[data-lens]').forEach(b=>b.onclick=()=>{UI.lens=b.dataset.lens; st.err=null; paneRide(t);});
+    $('#board').onclick=()=>rideFetch(t);
+    return;
+  }
+  const d=st.data;
+  const amap=(d.map||[]).length?`<div class="amap"><span class="h">In the analogy</span><span></span><span class="h">In the system</span>${d.map.map(r=>`<span>${esc(r.lens)}</span><span class="ar">→</span><span>${esc(r.real)}</span>`).join('')}</div>`:'';
+  const facts=[['Rule of thumb',d.rule_of_thumb],['Seen in the wild',d.seen_in],['Interview trap',d.trap]].filter(f=>f[1]).map(f=>`<div class="fact"><b>${f[0]}</b>${esc(f[1])}</div>`).join('');
+  st.answers=st.answers||{};
+  const qs=(d.check||[]).map((q,qi)=>{
+    const a=st.answers[qi];
+    return `<div class="q"><div class="qq">${qi+1}. ${esc(q.q)}</div><div class="opts">${(q.options||[]).map((o,oi)=>{
+      let cls=''; if(a!=null){ if(oi===q.answer) cls='right'; else if(oi===a) cls='wrong'; }
+      return `<button class="opt ${cls}" data-q="${qi}" data-o="${oi}" ${a!=null?'disabled':''}>${esc(o)}</button>`;}).join('')}</div>${a!=null?`<div class="why">${a===q.answer?'Correct.':'Not quite.'} ${esc(q.why)}</div>`:''}</div>`;
+  }).join('');
+  P.innerHTML=`<div class="row" style="justify-content:space-between"><h3>Ride</h3><span class="note">Lens: ${esc((LENSES.find(l=>l[0]===st.lens)||LENSES[0])[1])}</span></div>
+    <div class="tagline">${esc(d.tagline)}</div>
+    <div class="prose">${(d.explain||[]).map(p=>`<p>${esc(p)}</p>`).join('')}</div>
+    ${amap}<div class="facts">${facts}</div>
+    <div class="pocket"><b>Pocket card</b><p>${esc(d.remember)}</p></div>
+    <div><b>Quick check</b>${qs}</div>
+    <div class="chips" style="margin-top:16px" role="group" aria-label="Ride again with another lens">${lensChips}</div>
+    <button class="btn alt" id="again">Ride again with this lens</button>`;
+  P.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    const qi=+b.dataset.q, oi=+b.dataset.o; st.answers[qi]=oi;
+    const n=(d.check||[]).length; const done=Object.keys(st.answers).length===n;
+    if(done){ const right=d.check.filter((q,i)=>st.answers[i]===q.answer).length;
+      if(right>=Math.ceil(n/2)) award(t.key,'e',20,'Ride complete'); else toast(right+'/'+n+'. Ride again to earn the pip.'); }
+    renderStop(t);
+  });
+  P.querySelectorAll('[data-lens]').forEach(b=>b.onclick=()=>{UI.lens=b.dataset.lens; paneRide(t);});
+  $('#again').onclick=()=>{try{localStorage.removeItem(cacheKey(t.key,UI.lens));}catch(e){} rideFetch(t);};
+}
+async function rideFetch(t){
+  const st=UI.ride[t.key]; st.loading=true; st.err=null; paneRide(t);
+  const lens=UI.lens, lensName=(LENSES.find(l=>l[0]===lens)||LENSES[0])[1];
+  const prompt=`You are an outstanding system design teacher. Teach ${ctxOf(t)}.
+Learner: preparing for system design interviews; smart, but new to this concept.
+Lens: ${lens==='plain'?'no analogy, straight engineering intuition':`build the intuition through "${lensName}" (an Indian everyday context), mapped carefully onto the real mechanics`}.
+JSON shape:
+{"tagline": "what it is, max 12 words",
+ "explain": ["paragraph 1: intuition${lens==='plain'?'':' through the lens'}", "paragraph 2: how it really works", "paragraph 3: when to use it and its trade-off"],  (each paragraph under 60 words, plain text)
+ "map": [{"lens":"element of the analogy","real":"technical counterpart"}]  (3 items, or [] if no analogy),
+ "rule_of_thumb": "one widely documented number, limit or heuristic engineers use for this; empty string if none is well established",
+ "seen_in": "one well-known real system that uses it and how, max 25 words",
+ "trap": "the most common interview mistake about it, max 25 words",
+ "remember": "a memorable one-line hook, max 18 words",
+ "check": [{"q":"short scenario question","options":["","","",""],"answer":0,"why":"max 30 words"}, {second question}]}
+Questions should test application, not definitions. Put the correct option at varied positions. Only state facts you are confident are accurate.`;
+  try{
+    const d=await askJSON(prompt);
+    st.data=d; st.lens=lens; st.answers={};
+    try{localStorage.setItem(cacheKey(t.key,lens),JSON.stringify(d));}catch(e){}
+    if(d.remember){S.notes[t.key]=String(d.remember).slice(0,220); save();}
+  }catch(e){st.err=errText(e);}
+  st.loading=false; if(currentStop(t)) paneRide(t);
+}
+function currentStop(t){return location.hash===`#stop-${t.sec}-${t.idx}`&&document.getElementById('panel');}
+
+/* ---------- PAGER ---------- */
+function panePager(t){
+  const P=$('#panel'); const st=UI.pager[t.key]||(UI.pager[t.key]={});
+  if(st.loading&&!st.rounds){P.innerHTML=`<h3>Pager</h3>${loadingHTML('Paging the on-call engineer…')}`;return;}
+  if(!st.rounds){
+    P.innerHTML=`<h3>Pager</h3><p class="muted" style="margin:0">It's 2:47 AM. You're on call at a fictional company and something is on fire. The concept is never named in the alert. Read the dashboards, pick a move, live with the consequences. Three rounds.</p>
+      <div style="margin-top:12px"><button class="btn sig" id="start">Start the shift</button></div>${st.err?`<div class="err">${st.err}</div>`:''}`;
+    $('#start').onclick=()=>pagerStart(t); return;
+  }
+  const R=st.rounds; const curR=R[R.length-1];
+  let html=`<div class="row" style="justify-content:space-between"><h3>Pager</h3><span class="note mono">${esc(st.company||'')}</span></div>
+    <div class="rounds">${[0,1,2].map(i=>`<i class="${i<R.length-(curR.chosen==null?1:0)?'done':''}"></i>`).join('')}</div>`;
+  R.forEach((r,ri)=>{
+    html+=`<div class="pager"><div class="top"><span>${esc(st.service||'prod')} · round ${ri+1}</span><span>02:${pad(47+ri*6)} IST</span></div>
+      <div class="al">${esc(r.alert)}</div>
+      <div class="metrics">${(r.metrics||[]).map(m=>`<span class="metric ${esc(m.state)}">${esc(m.name)}<b>${esc(m.value)}</b></span>`).join('')}</div></div>
+      <div class="ctx">${esc(r.context)}</div>`;
+    if(r.chosen==null){
+      html+= st.loading?loadingHTML('Applying your fix to production…'):`<div class="opts">${(r.choices||[]).map((c,ci)=>`<button class="opt" data-c="${ci}">${esc(c)}</button>`).join('')}</div>`;
+    } else {
+      html+=`<div class="opts"><button class="opt" disabled style="border-color:var(--ink)">You: ${esc(r.choices[r.chosen])}</button></div>`;
+      if(r.res) html+=`<div class="outcome ${esc(r.res.quality)}"><b>${esc(r.res.quality)}</b><div>${esc(r.res.outcome)}</div><div class="why" style="color:var(--ink)"><b style="text-transform:none;letter-spacing:0">Lesson:</b> ${esc(r.res.lesson)}</div></div>`;
+    }
+  });
+  if(st.debrief){const d=st.debrief;
+    html+=`<div class="pocket ${d.survived?'win':'loss'}"><b>${d.survived?'Incident resolved':'Postmortem'}</b><p>${esc(d.summary)}</p></div>
+      <div class="fact"><b>The better move</b>${esc(d.better_move)}</div>
+      <div style="margin-top:12px"><button class="btn alt" id="restart">New incident</button></div>`;
+  }
+  if(st.err) html+=`<div class="err">${st.err}</div>`;
+  P.innerHTML=html;
+  P.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>pagerChoose(t,+b.dataset.c));
+  const rs=$('#restart'); if(rs) rs.onclick=()=>{UI.pager[t.key]={}; pagerStart(t);};
+}
+async function pagerStart(t){
+  const st=UI.pager[t.key]; st.loading=true; st.err=null; panePager(t);
+  const prompt=`Run a production incident simulation that teaches ${ctxOf(t)}. The learner is the on-call engineer.
+Invent a fictional company (an Indian consumer app context is welcome) and a realistic incident where understanding "${t.name}" is the key to resolving it. Never name the concept in the alert or context.
+JSON shape: {"company":"fictional name","service":"service name","alert":"pager text, max 20 words","context":"what is happening and what you can see, max 55 words","metrics":[{"name":"","value":"","state":"bad|warn|ok"}] (3 or 4),"choices":["","",""]}
+Choices: 3 concrete actions, max 18 words each: one strong, one tempting but wrong, one partial. Random order. No hints about which is which.`;
+  try{const d=await askJSON(prompt); st.company=d.company; st.service=d.service; st.rounds=[{alert:d.alert,context:d.context,metrics:d.metrics,choices:d.choices}];}
+  catch(e){st.err=errText(e);}
+  st.loading=false; if(currentStop(t)) panePager(t);
+}
+async function pagerChoose(t,ci){
+  const st=UI.pager[t.key]; const R=st.rounds; const r=R[R.length-1]; r.chosen=ci; st.loading=true; st.err=null; panePager(t);
+  const n=R.length;
+  const hist=R.map((x,i)=>({round:i+1,alert:x.alert,context:x.context,choices:x.choices,chosen:x.choices[x.chosen],result:x.res?x.res.outcome:undefined}));
+  const prompt=`Incident simulation teaching ${ctxOf(t)}. Company: ${st.company}. This is round ${n} of at most 3.
+History so far: ${JSON.stringify(hist)}
+The learner just chose: "${r.choices[ci]}".
+Judge that choice honestly, as a senior SRE would, then continue the story.
+JSON shape: {"quality":"strong|partial|wrong","outcome":"what happens because of the choice, max 45 words","lesson":"the underlying principle, max 30 words",
+ "next": ${n>=3?'null':'null if the incident is fully resolved, otherwise {"alert":"","context":"","metrics":[{"name":"","value":"","state":"bad|warn|ok"}],"choices":["","",""]} with the same rules as before (one strong, one tempting but wrong, one partial, random order)'},
+ "debrief": null unless next is null; then {"survived":true or false,"summary":"how the night went, max 50 words","better_move":"the ideal sequence of moves, max 35 words"}}`;
+  try{
+    const d=await askJSON(prompt);
+    r.res={quality:['strong','partial','wrong'].includes(d.quality)?d.quality:'partial',outcome:d.outcome,lesson:d.lesson};
+    if(d.next&&n<3){R.push({alert:d.next.alert,context:d.next.context,metrics:d.next.metrics,choices:d.next.choices});}
+    else{
+      st.debrief=d.debrief||{survived:r.res.quality==='strong',summary:d.outcome,better_move:d.lesson};
+      if(st.debrief.survived) award(t.key,'i',40,'Incident resolved'); else addXP(10,'Postmortem filed');
+    }
+  }catch(e){r.chosen=null; st.err=errText(e);}
+  st.loading=false; if(currentStop(t)) panePager(t);
+}
+
+/* ---------- TEACH ---------- */
+function paneTeach(t){
+  const P=$('#panel'); const st=UI.teach[t.key]||(UI.teach[t.key]={});
+  if(st.loading&&!st.q){P.innerHTML=`<h3>Teach</h3>${loadingHTML('Ravi is walking over with his laptop…')}`;return;}
+  if(!st.q){
+    P.innerHTML=`<h3>Teach</h3><p class="muted" style="margin:0">Ravi joined the team six months out of college. He's sharp and asks "why" until the answer holds. Explain it well enough and he gets it; leave a gap and he finds it. Score 2 of 3 to earn the pip.</p>
+      <div style="margin-top:12px"><button class="btn" id="callR">Call Ravi over</button></div>${st.err?`<div class="err">${st.err}</div>`:''}`;
+    $('#callR').onclick=()=>teachAsk(t); return;
+  }
+  let html=`<h3>Teach</h3><div class="bubble"><div class="who">Ravi</div>${esc(st.q)}</div>`;
+  if(st.g){const g=st.g;
+    html+=`<div class="bubble" style="border-radius:14px 14px 2px 14px;margin-left:auto;background:var(--card);border-color:var(--rule)"><div class="who">You</div>${esc(st.a)}</div>
+      <div class="bubble"><div class="who">Ravi</div>${esc(g.reaction)}</div>
+      <div class="row"><b>Score</b><span class="score">${[0,1,2].map(i=>`<i class="${i<g.score?'on':''}"></i>`).join('')}</span><span class="mono">${g.score}/3</span></div>
+      <div class="cols"><div><b>You nailed</b><ul>${(g.nailed||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>Nothing yet</li>'}</ul></div><div><b>Missing</b><ul>${(g.missing||[]).map(x=>`<li>${esc(x)}</li>`).join('')||'<li>Nothing major</li>'}</ul></div></div>
+      <details><summary>A crisp model answer</summary><p>${esc(g.model_answer)}</p></details>
+      <div class="row" style="margin-top:12px"><button class="btn alt" id="retry">Answer again</button><button class="btn alt" id="newq">New question</button></div>`;
+  } else {
+    html+=`<label for="ans" class="note">Your explanation. Short is fine if it's right.</label>
+      <textarea id="ans" placeholder="Type, or use your keyboard's voice input">${esc(st.draft||'')}</textarea>
+      <div style="margin-top:10px">${st.loading?loadingHTML('Ravi is thinking about your answer…'):'<button class="btn" id="send">Explain to Ravi</button>'}</div>`;
+  }
+  if(st.err) html+=`<div class="err">${st.err}</div>`;
+  P.innerHTML=html;
+  const ta=$('#ans'); if(ta) ta.oninput=()=>{st.draft=ta.value;};
+  const sd=$('#send'); if(sd) sd.onclick=()=>teachGrade(t);
+  const rt=$('#retry'); if(rt) rt.onclick=()=>{st.draft=st.a; st.g=null; paneTeach(t);};
+  const nq=$('#newq'); if(nq) nq.onclick=()=>{UI.teach[t.key]={}; teachAsk(t);};
+}
+async function teachAsk(t){
+  const st=UI.teach[t.key]; st.loading=true; st.err=null; paneTeach(t);
+  const prompt=`You play Ravi, a sharp junior engineer six months out of college, asking a senior colleague about ${ctxOf(t)}.
+Ask ONE question that forces a real explanation: a "why", "what happens when" or "how would you choose" question, the kind an interviewer would ask. Casual, friendly tone.
+JSON shape: {"question":"max 35 words"}`;
+  try{const d=await askJSON(prompt,{modelTier:'quick'}); st.q=d.question;}catch(e){st.err=errText(e);}
+  st.loading=false; if(currentStop(t)) paneTeach(t);
+}
+async function teachGrade(t){
+  const st=UI.teach[t.key]; const a=(st.draft||'').trim();
+  if(a.length<15){st.err='Give Ravi at least a sentence or two.'; paneTeach(t); return;}
+  st.a=a; st.loading=true; st.err=null; paneTeach(t);
+  const prompt=`Grade a learner's explanation of ${ctxOf(t)}, as a fair but demanding system design interviewer would.
+Question (asked by Ravi, a junior engineer): "${st.q}"
+Learner's answer: """${a.slice(0,3000)}"""
+Scoring: 0 = wrong or empty, 1 = vague or partly wrong, 2 = correct and clear, 3 = correct with trade-offs or edge cases.
+JSON shape: {"score":0,"reaction":"Ravi's honest reply in his voice; if something is missing, he asks about it. max 30 words","nailed":["up to 3 short items"],"missing":["up to 3 short items"],"model_answer":"a crisp answer in 3 sentences"}`;
+  try{const g=await askJSON(prompt); g.score=Math.max(0,Math.min(3,Math.round(+g.score||0))); st.g=g;
+    if(g.score>=2) award(t.key,'t',60,'Ravi gets it'); else addXP(5,'Keep going');
+  }catch(e){st.err=errText(e);}
+  st.loading=false; if(currentStop(t)) paneTeach(t);
+}
+
+/* ================= TODAY ================= */
+function dueList(){
+  const now=Date.now();
+  return Object.entries(S.rev).filter(([k,r])=>KEYLOC[k]&&now-r.at>=INTERVALS[Math.min(r.n,INTERVALS.length-1)]*DAY).sort((a,b)=>a[1].at-b[1].at).map(([k])=>k);
+}
+function suggestions(){
+  const out=[];
+  if(S.last){const s=SEC[S.last.sec]; if(s) for(let i=S.last.idx;i<s.stops.length&&out.length<1;i++){ if(pipCount(s.stops[i].key)<3) out.push(s.stops[i]); }}
+  for(const s of SECS){ if(out.length>=4) break; const t=s.stops.find(x=>pipCount(x.key)===0); if(t&&!out.some(o=>o.key===t.key)) out.push(t); }
+  return out.slice(0,4);
+}
+function renderToday(){
+  const due=dueList(); const td=S.daily[today()]||0; const goal=5;
+  const sug=suggestions();
+  $('#view').innerHTML=`
+    <header class="mast"><div><h1>Today</h1><div class="sub">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</div></div></header>
+    ${ticketHTML()}
+    <div class="card quest" style="margin-top:12px"><div class="row" style="justify-content:space-between"><b>Daily quest: 5 actions</b><span class="mono">${Math.min(td,goal)}/${goal}</span></div><div class="bar"><i style="width:${Math.min(100,td/goal*100)}%"></i></div><div class="note" style="margin-top:6px">Any ride, incident, teach-back, review or arcade round counts.</div></div>
+    <div class="sect"><h2>Due for review</h2><span class="mono note">${due.length}</span></div>
+    <div id="revs">${due.length?'':`<div class="card note">Nothing due. Stops you learn come back here after 1, 3, 7, 16 and 35 days so they stick.</div>`}</div>
+    <div class="sect"><h2>Next stops</h2></div>
+    <div class="sugg">${sug.map(t=>{const s=SEC[t.sec];return `<div class="card"><a href="#stop-${t.sec}-${t.idx}"><span class="rd" style="--c:${s.c};--on:${s.on}">${s.n}</span><span><b>${esc(t.name)}</b><br><span class="note">${esc(s.name)}</span></span><span style="margin-left:auto">${pipsHTML(t.key)}</span></a></div>`;}).join('')||'<div class="card note">Every stop is mastered. You reached the terminus.</div>'}</div>`;
+  renderRevs(due.slice(0,8));
+}
+function renderRevs(keys){
+  const box=$('#revs'); if(!keys.length) return;
+  box.innerHTML=keys.map(k=>{const l=KEYLOC[k][0]; const t=SEC[l.sec].stops[l.idx];
+    return `<div class="card rev" data-k="${esc(k)}"><div class="row" style="justify-content:space-between"><span class="k">${esc(t.name)}</span><span class="note">Line ${l.sec}</span></div>
+      <div class="n" hidden>${S.notes[k]?esc(S.notes[k]):'<span class="muted">No pocket card yet. Ride this stop to get one.</span>'}</div>
+      <div class="row"><button class="btn alt rv-show">Recall it, then reveal</button><a class="note" href="#stop-${l.sec}-${l.idx}">Open stop</a></div>
+      <div class="row rv-rate" hidden><span class="note">How well did you recall it?</span><button class="chip" data-r="0">Forgot</button><button class="chip" data-r="1">Got it</button><button class="chip" data-r="2">Easy</button></div></div>`;}).join('');
+  box.querySelectorAll('.rev').forEach(c=>{
+    c.querySelector('.rv-show').onclick=e=>{c.querySelector('.n').hidden=false; c.querySelector('.rv-rate').hidden=false; e.target.hidden=true;};
+    c.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{const k=c.dataset.k; const r=S.rev[k]; const v=+b.dataset.r;
+      r.n = v===0?0:r.n+v; r.at=Date.now(); addXP(10,'Reviewed'); renderToday();});
+  });
+}
+
+/* ================= ARCADE ================= */
+const LAT=[ // classic "latency numbers every programmer should know" (Jeff Dean / Peter Norvig), in ns
+ ['L1 cache reference',0.5],['Branch mispredict',5],['L2 cache reference',7],['Mutex lock/unlock',25],['Main memory reference',100],
+ ['Compress 1 KB with a fast compressor',3000],['Send 1 KB over a 1 Gbps network',10000],['Read 4 KB randomly from SSD',150000],
+ ['Read 1 MB sequentially from memory',250000],['Round trip within the same datacenter',500000],['Read 1 MB sequentially from SSD',1000000],
+ ['Disk seek',10000000],['Read 1 MB sequentially from disk',20000000],['Packet California → Netherlands → California',150000000]];
+function fmtNs(ns){if(ns<1000) return ns+' ns'; if(ns<1e6) return (ns/1000)+' µs'; if(ns<1e9) return (ns/1e6)+' ms'; return (ns/1e9)+' s';}
+const NAPKIN=[
+ {q:'100M daily active users each make 10 reads a day. Average read QPS?',o:['1.2K','12K','120K','1.2M'],a:1,w:'10⁹ reads ÷ 86,400 s ≈ 11,600/s. Round a day to 10⁵ seconds for fast mental math.'},
+ {q:'500M posts a day, 300 bytes of text each. Raw text storage per year?',o:['5.5 TB','55 TB','550 TB','5.5 PB'],a:1,w:'500M × 300 B = 150 GB/day; × 365 ≈ 55 TB/year before replication.'},
+ {q:'A URL shortener creates 100M links a month at 500 bytes each. Storage for 5 years?',o:['300 GB','3 TB','30 TB','300 TB'],a:1,w:'100M × 60 months = 6B links; × 500 B = 3 TB.'},
+ {q:'1M video uploads a day, averaging 100 MB each. New raw storage per day?',o:['1 TB','10 TB','100 TB','1 PB'],a:2,w:'10⁶ × 10⁸ B = 10¹⁴ B = 100 TB/day, before transcoded renditions.'},
+ {q:'Peak traffic is 6,000 QPS and one server safely handles 500 QPS. Servers needed at peak (no headroom)?',o:['3','12','40','120'],a:1,w:'6,000 ÷ 500 = 12. Add headroom and N+1 for failures in a real plan.'},
+ {q:'10K QPS, each response averages 50 KB. Egress bandwidth?',o:['400 Mbps','4 Gbps','40 Gbps','400 Gbps'],a:1,w:'10⁴ × 50 KB = 500 MB/s; × 8 bits = 4 Gbps.'},
+ {q:'50M daily users send 40 chat messages each per day. Average messages per second?',o:['2.3K','23K','230K','2.3M'],a:1,w:'2 × 10⁹ ÷ 86,400 ≈ 23,000/s. Peak is often 2 to 5× that.'},
+ {q:'Cache the hottest 20% of 1B items at 1 KB each. Cache memory needed?',o:['2 GB','20 GB','200 GB','2 TB'],a:2,w:'0.2 × 10⁹ × 1 KB = 200 GB, spread over several cache nodes.'},
+ {q:'1 million requests per day is roughly how many per second?',o:['1.2','12','120','1,200'],a:1,w:'10⁶ ÷ 86,400 ≈ 11.6/s. A handy anchor: 1M/day ≈ 12/s.'},
+ {q:'2M photos a day at 2 MB each, stored with 3 replicas. Raw storage per day?',o:['1.2 TB','12 TB','120 TB','1.2 PB'],a:1,w:'2M × 2 MB = 4 TB; × 3 replicas = 12 TB/day.'},
+ {q:'A log stream carries 1M events/s at 1 KB each, retained 7 days. Storage?',o:['6 TB','60 TB','600 TB','6 PB'],a:2,w:'1 GB/s × 604,800 s ≈ 605 TB before replication.'},
+ {q:'40K read QPS; each read replica handles 5K QPS. Replicas needed?',o:['2','8','20','80'],a:1,w:'40,000 ÷ 5,000 = 8 replicas, plus spare capacity for a replica failure.'}
+];
+const PATTERNS=[
+ {q:'A downstream API keeps timing out. You want to stop calling it for a while and fail fast.',o:['Circuit breaker','Bulkhead','Saga','Sidecar'],a:0,w:'A breaker opens after repeated failures and probes later, so callers stop waiting on a dead dependency.'},
+ {q:'A slow reporting feature exhausts the shared thread pool, and checkout dies with it.',o:['Retry with backoff','Bulkhead','CQRS','Circuit breaker'],a:1,w:'Bulkheads give each workload its own pool so one cannot sink the others.'},
+ {q:'Order, payment and inventory each own a database. You need all steps done, or compensated.',o:['Outbox','Strangler fig','Saga','CQRS'],a:2,w:'A saga runs local transactions in sequence with compensating actions on failure.'},
+ {q:'You write to the DB and must publish an event, without losing it if the broker is down.',o:['Saga','Outbox','Ambassador','Circuit breaker'],a:1,w:'Write the event to an outbox table in the same transaction; a relay publishes it later.'},
+ {q:'Replace a legacy monolith piece by piece, behind the same routes.',o:['Backend for frontend','Bulkhead','Strangler fig','Saga'],a:2,w:'Route slices of traffic to new services until the old system can be retired.'},
+ {q:'Mobile and web need differently shaped responses from the same services.',o:['Backend for frontend','Sidecar','CQRS','Strangler fig'],a:0,w:'A BFF per client shapes and aggregates calls for that client.'},
+ {q:'Reads vastly outnumber writes and need a different shape than the write model.',o:['Saga','Outbox','Bulkhead','CQRS'],a:3,w:'CQRS separates the write model from one or more read-optimised projections.'},
+ {q:'Add mTLS, retries and metrics to every service without touching app code.',o:['Adapter','Sidecar proxy','Factory','Saga'],a:1,w:'A sidecar proxy (the basis of a service mesh) handles cross-cutting network concerns.'},
+ {q:'A hot cache key expires and thousands of requests hit the DB at once.',o:['Write-back cache','Sticky sessions','Request coalescing','Read replicas'],a:2,w:'Let one request rebuild the value while others wait (single-flight), or refresh early.'},
+ {q:'A client retries a payment request after a timeout. It must not charge twice.',o:['Exponential backoff','Idempotency key','Circuit breaker','Read-your-writes'],a:1,w:'The server stores the result per idempotency key and returns it for duplicates.'},
+ {q:'After an outage, all clients retry in lockstep and crush the recovering service.',o:['Sticky sessions','Consistent hashing','Backoff with jitter','Bulkhead'],a:2,w:'Exponential backoff with random jitter spreads retries out over time.'},
+ {q:'Adding one cache node remaps almost every key and the hit rate collapses.',o:['Round robin','Consistent hashing','IP hash','LRU eviction'],a:1,w:'Consistent hashing moves only about 1/N of keys when a node joins or leaves.'}
+];
+const GAMES={ladder:['Latency Ladder','Order five operations from fastest to slowest.'],napkin:['Napkin Math','Back-of-the-envelope estimates, by order of magnitude.'],pattern:['Pattern Match','Symptom in, pattern out.']};
+let G=null;
+function renderArcade(){
+  $('#view').innerHTML=`
+    <header class="mast"><div><h1>Arcade</h1><div class="sub">Five-round drills. Works offline, no Claude needed.</div></div></header>
+    <div class="games">${Object.entries(GAMES).map(([k,v])=>`<button class="game" aria-pressed="${UI.game===k}" data-g="${k}"><div class="t">${v[0]}</div><div class="d">${v[1]}</div><div class="best">Best: ${S.arcade[k]||0}/5</div></button>`).join('')}</div>
+    <section class="panel" id="gpanel" style="margin-top:12px"></section>`;
+  document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{UI.game=b.dataset.g; G=null; renderArcade();});
+  if(!UI.game) UI.game='ladder';
+  document.querySelector(`[data-g="${UI.game}"]`).setAttribute('aria-pressed','true');
+  ({ladder:gLadder,napkin:gQuiz,pattern:gQuiz})[UI.game]();
+}
+function finishGame(k,score){ if(score>(S.arcade[k]||0)) S.arcade[k]=score; addXP(score*5+5, GAMES[k][0]+' '+score+'/5'); }
+function gLadder(){
+  const P=$('#gpanel');
+  if(!G||G.k!=='ladder'){G={k:'ladder',items:shuffle(LAT).slice(0,5),pick:[]};}
+  const done=G.pick.length===5;
+  if(!done){
+    P.innerHTML=`<h3>Latency Ladder</h3><p class="note" style="margin-top:0">Tap from <b>fastest</b> to <b>slowest</b>. Tap a picked one to undo.</p>
+      <div class="ladder">${G.items.map((it,i)=>{const p=G.pick.indexOf(i);return `<button class="lad ${p>=0?'picked':''}" data-i="${i}"><span>${esc(it[0])}</span><span class="ord">${p>=0?p+1:''}</span></button>`;}).join('')}</div>`;
+    P.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i; const p=G.pick.indexOf(i);
+      if(p>=0) G.pick.splice(p); else G.pick.push(i);
+      if(G.pick.length===5){const sorted=G.items.map((x,i)=>i).sort((a,b)=>G.items[a][1]-G.items[b][1]); G.score=G.pick.filter((v,j)=>G.items[v][1]===G.items[sorted[j]][1]).length; finishGame('ladder',G.score);} gLadder();});
+    return;
+  }
+  const sorted=G.items.map((x,i)=>i).sort((a,b)=>G.items[a][1]-G.items[b][1]);
+  const mx=Math.log10(G.items[sorted[4]][1])+1.5;
+  P.innerHTML=`<h3>Latency Ladder · ${G.score}/5</h3><p class="note" style="margin-top:0">Correct order, bars on a log scale. Red means you placed it elsewhere.</p>
+    ${sorted.map((i,j)=>{const it=G.items[i]; const w=Math.max(3,(Math.log10(it[1])+1.5)/mx*100); const miss=G.items[G.pick[j]][1]!==it[1];
+      return `<div class="lbar ${miss?'miss':''}"><div class="row" style="justify-content:space-between;gap:6px"><span>${j+1}. ${esc(it[0])}</span><span class="v">${fmtNs(it[1])}</span></div><div class="bx" style="width:${w}%"></div></div>`;}).join('')}
+    <p class="note">Classic figures from the widely shared "latency numbers every programmer should know" list (Jeff Dean, Peter Norvig). Modern hardware shifts some, but the orders of magnitude hold.</p>
+    <button class="btn" id="again">Play again</button>`;
+  $('#again').onclick=()=>{G=null; gLadder();};
+}
+function gQuiz(){
+  const k=UI.game, bank=k==='napkin'?NAPKIN:PATTERNS, P=$('#gpanel');
+  if(!G||G.k!==k){G={k,qs:shuffle(bank).slice(0,5).map(q=>{const order=shuffle(q.o.map((_,i)=>i)); return {q:q.q,o:order.map(i=>q.o[i]),a:order.indexOf(q.a),w:q.w};}),i:0,score:0,ans:null};}
+  if(G.i>=5){
+    P.innerHTML=`<h3>${GAMES[k][0]} · ${G.score}/5</h3><p>${G.score===5?'Flawless.':G.score>=3?'Solid. Run it again to see new questions.':'Run it again; the explanations are the lesson.'}</p><button class="btn" id="again">Play again</button>`;
+    $('#again').onclick=()=>{G=null; gQuiz();}; return;
+  }
+  const q=G.qs[G.i];
+  P.innerHTML=`<div class="row" style="justify-content:space-between"><h3>${GAMES[k][0]}</h3><span class="mono note">${G.i+1}/5 · ${G.score} right</span></div>
+    <div class="qq" style="font-weight:700;margin:6px 0 10px">${esc(q.q)}</div>
+    <div class="opts">${q.o.map((o,oi)=>{let c=''; if(G.ans!=null){if(oi===q.a)c='right'; else if(oi===G.ans)c='wrong';} return `<button class="opt ${c}" data-o="${oi}" ${G.ans!=null?'disabled':''}>${esc(o)}</button>`;}).join('')}</div>
+    ${G.ans!=null?`<div class="why">${esc(q.w)}</div><div style="margin-top:12px"><button class="btn" id="nx">${G.i===4?'See score':'Next'}</button></div>`:''}`;
+  P.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{G.ans=+b.dataset.o; if(G.ans===q.a) G.score++; gQuiz();});
+  const nx=$('#nx'); if(nx) nx.onclick=()=>{G.i++; G.ans=null; if(G.i>=5) finishGame(k,G.score); gQuiz();};
+}
+
+/* ================= Claude through the native bridge ================= */
+const CB={}; let cbSeq=0;
+window.__sdmCb=function(id,ok,text){
+  const c=CB[id]; if(!c) return; delete CB[id];
+  if(ok) c.res(text);
+  else { let e={code:'unknown',message:String(text)}; try{e=JSON.parse(text);}catch(x){} c.rej(e); }
+};
+function refreshAI(){
+  const key=lsGet(KK,'');
+  if(NATIVE&&NATIVE.ask&&key){
+    SAMPLE=function(input,o){
+      return new Promise((res,rej)=>{
+        const id='c'+(++cbSeq); CB[id]={res:t=>res({text:t}),rej};
+        try{ NATIVE.ask(id,String(input),MODELS[(o&&o.modelTier)==='quick'?'quick':'default'],key); }
+        catch(e){ delete CB[id]; rej({code:'unknown',message:'Could not reach the app bridge.'}); }
+      });
+    };
+  } else SAMPLE=null;
+  setAI(SAMPLE?'on':'off');
+}
+
+/* ================= AUTH ================= */
+const AUTH={tab:Object.keys(ACC).length?'in':'up',err:'',name:'',email:'',busy:false};
+function enter(email){
+  ME=ACC[email]; lsSet(SK,email);
+  LS='sdm.v1.'+ME.id; loadState();
+  UI.mode={}; UI.ride={}; UI.pager={}; UI.teach={}; UI.game=null; G=null;
+  refreshAI();
+}
+function signOut(){ ME=null; lsDel(SK); S=blank(); AUTH.tab='in'; AUTH.err=''; AUTH.email=''; setAI('off'); location.hash='#map'; route(); window.scrollTo(0,0); }
+function renderAuth(){
+  const up=AUTH.tab==='up', n=Object.keys(ACC).length;
+  $('#view').innerHTML=`
+    <div class="authHero"><div class="mono note">${SECS.length} LINES · ${TOTAL_STOPS} STOPS · 1 TERMINUS</div>
+      <h1>System Design <span>Metro</span></h1>
+      <p>Ride every concept on the roadmap, survive the 2:47 AM pager, and teach it back.</p></div>
+    <section class="panel">
+      <div class="chips" role="group" aria-label="Sign in or create account" style="margin-top:0">
+        <button class="chip" type="button" aria-pressed="${!up}" data-tab="in">Sign in</button>
+        <button class="chip" type="button" aria-pressed="${up}" data-tab="up">Create account</button>
+      </div>
+      <form id="authForm" novalidate>
+        ${up?`<div class="field"><label for="au-name">Name</label><input type="text" id="au-name" autocomplete="name" value="${esc(AUTH.name)}"></div>`:''}
+        <div class="field"><label for="au-email">Email</label><input type="email" id="au-email" autocomplete="email" inputmode="email" value="${esc(AUTH.email)}"></div>
+        <div class="field"><label for="au-pass">Password</label><input type="password" id="au-pass" autocomplete="${up?'new-password':'current-password'}"></div>
+        ${up?`<div class="field"><label for="au-pass2">Confirm password</label><input type="password" id="au-pass2" autocomplete="new-password"></div>`:''}
+        ${AUTH.err?`<div class="err" style="margin:0 0 12px">${esc(AUTH.err)}</div>`:''}
+        <button class="btn" type="submit" ${AUTH.busy?'disabled':''}>${up?'Create account':'Sign in'}</button>
+      </form>
+      <p class="note" style="margin:14px 0 0">Accounts and progress are stored on this phone only${n?` (${n} profile${n>1?'s':''} here)`:''}. Nothing is sent to a server, so a forgotten password cannot be recovered.</p>
+    </section>`;
+  document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{keep(); AUTH.tab=b.dataset.tab; AUTH.err=''; renderAuth();});
+  function keep(){const e=$('#au-email'), nm=$('#au-name'); if(e) AUTH.email=e.value; if(nm) AUTH.name=nm.value;}
+  $('#authForm').onsubmit=async ev=>{
+    ev.preventDefault(); if(AUTH.busy) return; keep();
+    const email=AUTH.email.trim().toLowerCase(), pw=$('#au-pass').value, name=AUTH.name.trim();
+    const fail=m=>{AUTH.err=m; AUTH.busy=false; renderAuth();};
+    if(!/^\S+@\S+\.\S+$/.test(email)) return fail('Enter a valid email address.');
+    if(up){
+      if(!name) return fail('Enter your name.');
+      if(pw.length<6) return fail('Use a password of at least 6 characters.');
+      if(pw!==$('#au-pass2').value) return fail('The two passwords do not match.');
+      if(ACC[email]) return fail('An account with this email already exists on this phone. Sign in instead.');
+    } else {
+      if(!ACC[email]) return fail('No account with this email on this phone. Create one first.');
+    }
+    AUTH.busy=true; AUTH.err='';
+    try{
+      if(up){
+        const salt=randHex(16), hash=await hashPw(pw,salt);
+        ACC[email]={id:randHex(6),name,email,salt,hash,created:Date.now()};
+        if(!lsSet(AK,ACC)){ delete ACC[email]; return fail('This phone would not save the account. Free up some storage and try again.'); }
+      } else {
+        const h=await hashPw(pw,ACC[email].salt);
+        if(h!==ACC[email].hash) return fail('Wrong password.');
+      }
+    }catch(e){ return fail('Could not check the password on this device. Try again.'); }
+    AUTH.busy=false; AUTH.name=''; AUTH.email='';
+    enter(email); location.hash='#map'; route(); window.scrollTo(0,0);
+    toast('Welcome aboard, '+ME.name.split(' ')[0]);
+  };
+}
+
+/* ================= PROFILE ================= */
+let delArmed=false;
+function renderProfile(){
+  const key=lsGet(KK,''); const n=Object.keys(ACC).length;
+  $('#view').innerHTML=`
+    <header class="mast"><div><h1>Profile</h1><div class="sub">${esc(ME.email)}</div></div></header>
+    ${ticketHTML()}
+    <div class="sect"><h2>Account</h2></div>
+    <div class="card">
+      <div class="kv"><span>Name</span><span>${esc(ME.name)}</span><span>Email</span><span>${esc(ME.email)}</span><span>Joined</span><span>${new Date(ME.created).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</span><span>Storage</span><span>On this phone only · ${n} profile${n>1?'s':''}</span></div>
+      <button class="btn alt" id="so">Sign out</button>
+    </div>
+    <div class="sect"><h2>Claude key</h2><span class="mono note ${key?'ok':''}">${key?'CONNECTED':'NOT SET'}</span></div>
+    <div class="card">
+      <p class="note" style="margin:0 0 4px">Ride, Pager and Teach write fresh content with Claude, which needs your own Anthropic API key. Usage is billed to your Anthropic account. The key stays on this phone and is sent only to api.anthropic.com.</p>
+      <div class="field"><label for="apikey">Anthropic API key</label><input type="password" id="apikey" placeholder="${key?'Saved: ••••'+esc(key.slice(-4)):'sk-ant-…'}" autocomplete="off"></div>
+      <div class="row"><button class="btn" id="ks">Save key</button>${key?'<button class="btn alt" id="kr">Remove key</button>':''}</div>
+    </div>
+    <div class="sect"><h2>Danger zone</h2></div>
+    <div class="card"><p class="note" style="margin:0 0 10px">Deletes this account and all its progress from this phone. This cannot be undone.</p>
+      <button class="btn alt danger" id="del">${delArmed?'Tap again to delete forever':'Delete this account'}</button></div>`;
+  $('#so').onclick=signOut;
+  $('#ks').onclick=()=>{const v=$('#apikey').value.trim(); if(v.length<20){toast('That does not look like an API key'); return;} lsSet(KK,v); refreshAI(); toast('Key saved'); renderProfile();};
+  const kr=$('#kr'); if(kr) kr.onclick=()=>{lsDel(KK); refreshAI(); toast('Key removed'); renderProfile();};
+  $('#del').onclick=()=>{
+    if(!delArmed){delArmed=true; renderProfile(); setTimeout(()=>{if(delArmed){delArmed=false; if(location.hash==='#profile'&&ME) renderProfile();}},4000); return;}
+    delArmed=false; lsDel('sdm.v1.'+ME.id); delete ACC[ME.email]; lsSet(AK,ACC); signOut(); toast('Account deleted');
+  };
+}
+
+/* ================= boot ================= */
+(function(){
+  const em=lsGet(SK,null);
+  if(em&&ACC[em]) enter(em); else setAI('off');
+  route();
+})();
+})();
+</script>
+</body>
+</html>
