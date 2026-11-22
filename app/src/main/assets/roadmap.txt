@@ -1,0 +1,523 @@
+SYSTEM DESIGN ROADMAP
+│
+├── 1. Computer Science Fundamentals
+│   ├── How the Internet Works
+│   ├── Client-Server Architecture
+│   ├── HTTP & HTTPS
+│   ├── DNS (Domain Name System)
+│   ├── TCP & UDP
+│   ├── IP Addresses & Ports
+│   ├── OSI Model
+│   ├── Network Protocols
+│   ├── REST Architecture
+│   ├── WebSockets
+│   ├── Operating System Fundamentals
+│   ├── Processes & Threads
+│   ├── Concurrency & Parallelism
+│   ├── Memory Management
+│   ├── CPU & I/O Basics
+│   └── Linux Fundamentals
+│
+├── 2. System Design Fundamentals
+│   ├── What is System Design?
+│   ├── What is Software Architecture?
+│   ├── Monolithic Architecture
+│   ├── Microservices Architecture
+│   ├── Service-Oriented Architecture (SOA)
+│   ├── Client-Server Architecture
+│   ├── Three-Tier Architecture
+│   ├── Layered Architecture
+│   ├── Event-Driven Architecture
+│   ├── Serverless Architecture
+│   ├── Distributed Systems Basics
+│   ├── Stateful vs Stateless Systems
+│   ├── Synchronous vs Asynchronous Communication
+│   └── Architectural Trade-offs
+│
+├── 3. Requirements & Design Fundamentals
+│   ├── Functional Requirements
+│   ├── Non-Functional Requirements
+│   ├── Scalability
+│   ├── Availability
+│   ├── Reliability
+│   ├── Maintainability
+│   ├── Fault Tolerance
+│   ├── Performance
+│   ├── Latency & Throughput
+│   ├── Consistency
+│   ├── Durability
+│   ├── Security
+│   ├── Capacity Estimation
+│   ├── Back-of-the-Envelope Calculations
+│   ├── Traffic Estimation
+│   ├── Storage Estimation
+│   └── Bandwidth Estimation
+│
+├── 4. Networking & Communication
+│   ├── HTTP Methods
+│   ├── HTTP Status Codes
+│   ├── HTTP Headers
+│   ├── Cookies & Sessions
+│   ├── TLS / SSL
+│   ├── REST APIs
+│   ├── GraphQL
+│   ├── gRPC
+│   ├── WebSockets
+│   ├── Server-Sent Events (SSE)
+│   ├── Long Polling
+│   ├── API Versioning
+│   ├── API Rate Limiting
+│   ├── Connection Pooling
+│   └── Keep-Alive Connections
+│
+├── 5. Database Fundamentals
+│   ├── Relational Databases
+│   │   ├── PostgreSQL
+│   │   ├── MySQL
+│   │   ├── Tables & Relationships
+│   │   ├── Primary & Foreign Keys
+│   │   ├── Indexing
+│   │   ├── B-Tree & B+ Tree
+│   │   ├── Query Optimization
+│   │   ├── Joins
+│   │   ├── Transactions
+│   │   ├── ACID Properties
+│   │   └── Normalization & Denormalization
+│   ├── NoSQL Databases
+│   │   ├── Document Databases
+│   │   ├── Key-Value Stores
+│   │   ├── Wide-Column Stores
+│   │   ├── Graph Databases
+│   │   └── MongoDB / Cassandra / DynamoDB
+│   ├── Database Internals
+│   │   ├── Storage Engines
+│   │   ├── Write-Ahead Logging (WAL)
+│   │   ├── MVCC
+│   │   ├── Locking
+│   │   └── Isolation Levels
+│   └── Database Design Decisions
+│       ├── SQL vs NoSQL
+│       ├── Schema Design
+│       ├── Read-Heavy vs Write-Heavy Workloads
+│       └── Data Modeling
+│
+├── 6. Caching
+│   ├── What is Caching?
+│   ├── Cache Hierarchy
+│   ├── Client-Side Caching
+│   ├── Browser Caching
+│   ├── CDN Caching
+│   ├── Application-Level Caching
+│   ├── Database Caching
+│   ├── Redis
+│   ├── Memcached
+│   ├── Cache-Aside Pattern
+│   ├── Read-Through Cache
+│   ├── Write-Through Cache
+│   ├── Write-Back Cache
+│   ├── Cache Invalidation
+│   ├── TTL (Time To Live)
+│   ├── Cache Eviction Policies
+│   │   ├── LRU
+│   │   ├── LFU
+│   │   └── FIFO
+│   ├── Cache Stampede
+│   └── Distributed Caching
+│
+├── 7. Load Balancing & Traffic Management
+│   ├── What is Load Balancing?
+│   ├── Layer 4 vs Layer 7 Load Balancing
+│   ├── Reverse Proxy
+│   ├── Forward Proxy
+│   ├── Nginx
+│   ├── HAProxy
+│   ├── Cloud Load Balancers
+│   ├── Round Robin
+│   ├── Least Connections
+│   ├── IP Hash
+│   ├── Consistent Hashing
+│   ├── Health Checks
+│   ├── Sticky Sessions
+│   ├── Horizontal Scaling
+│   ├── Vertical Scaling
+│   └── Auto Scaling
+│
+├── 8. Distributed Systems Fundamentals
+│   ├── What is a Distributed System?
+│   ├── Distributed System Challenges
+│   ├── CAP Theorem
+│   ├── PACELC Theorem
+│   ├── Consistency Models
+│   │   ├── Strong Consistency
+│   │   ├── Eventual Consistency
+│   │   ├── Causal Consistency
+│   │   └── Read-Your-Writes Consistency
+│   ├── Replication
+│   │   ├── Leader-Follower Replication
+│   │   ├── Multi-Leader Replication
+│   │   └── Leaderless Replication
+│   ├── Sharding & Partitioning
+│   ├── Data Replication Strategies
+│   ├── Distributed Transactions
+│   ├── Two-Phase Commit (2PC)
+│   ├── Consensus Algorithms
+│   │   ├── Paxos
+│   │   └── Raft
+│   ├── Split Brain Problem
+│   ├── Quorum
+│   ├── Distributed Locking
+│   ├── Clock Synchronization
+│   └── Idempotency
+│
+├── 9. Message Queues & Event Streaming
+│   ├── Message Queue Fundamentals
+│   ├── Synchronous vs Asynchronous Processing
+│   ├── Producer-Consumer Pattern
+│   ├── Message Brokers
+│   ├── RabbitMQ
+│   ├── Apache Kafka
+│   ├── Redis Streams
+│   ├── Amazon SQS
+│   ├── Publish-Subscribe Pattern
+│   ├── Event-Driven Architecture
+│   ├── Topics & Partitions
+│   ├── Consumer Groups
+│   ├── Message Ordering
+│   ├── Delivery Guarantees
+│   │   ├── At-Most-Once
+│   │   ├── At-Least-Once
+│   │   └── Exactly-Once Semantics
+│   ├── Dead Letter Queues
+│   ├── Retry Mechanisms
+│   ├── Event Replay
+│   └── Event Sourcing
+│
+├── 10. Scalability & Performance
+│   ├── Horizontal vs Vertical Scaling
+│   ├── Stateless Services
+│   ├── Database Scaling
+│   ├── Read Replicas
+│   ├── Database Sharding
+│   ├── Partitioning Strategies
+│   ├── Connection Pooling
+│   ├── Query Optimization
+│   ├── CDN & Edge Computing
+│   ├── Data Compression
+│   ├── Pagination
+│   ├── Batching
+│   ├── Rate Limiting
+│   ├── Load Shedding
+│   ├── Backpressure
+│   ├── Hotspot Mitigation
+│   └── Performance Bottleneck Analysis
+│
+├── 11. Reliability & Fault Tolerance
+│   ├── Fault Tolerance Fundamentals
+│   ├── Redundancy
+│   ├── High Availability
+│   ├── Failover Strategies
+│   ├── Active-Active Architecture
+│   ├── Active-Passive Architecture
+│   ├── Circuit Breaker Pattern
+│   ├── Retry Pattern
+│   ├── Exponential Backoff
+│   ├── Timeout Management
+│   ├── Bulkhead Pattern
+│   ├── Graceful Degradation
+│   ├── Health Checks
+│   ├── Disaster Recovery
+│   ├── Backup & Restore
+│   ├── RPO & RTO
+│   └── Chaos Engineering
+│
+├── 12. Microservices Architecture
+│   ├── Monolith vs Microservices
+│   ├── Service Decomposition
+│   ├── Domain-Driven Design (DDD)
+│   ├── Bounded Contexts
+│   ├── Service Discovery
+│   ├── API Gateway
+│   ├── Backend for Frontend (BFF)
+│   ├── Inter-Service Communication
+│   ├── Synchronous Communication
+│   ├── Asynchronous Communication
+│   ├── Database Per Service
+│   ├── Saga Pattern
+│   ├── CQRS
+│   ├── Event Sourcing
+│   ├── Distributed Tracing
+│   ├── Service Mesh
+│   ├── Sidecar Pattern
+│   └── Microservices Deployment Strategies
+│
+├── 13. System Design Patterns
+│   ├── Singleton Pattern
+│   ├── Factory Pattern
+│   ├── Observer Pattern
+│   ├── Strategy Pattern
+│   ├── Adapter Pattern
+│   ├── Decorator Pattern
+│   ├── Repository Pattern
+│   ├── Dependency Injection
+│   ├── API Gateway Pattern
+│   ├── Strangler Fig Pattern
+│   ├── Sidecar Pattern
+│   ├── Ambassador Pattern
+│   ├── CQRS Pattern
+│   ├── Saga Pattern
+│   ├── Outbox Pattern
+│   ├── Retry Pattern
+│   ├── Circuit Breaker Pattern
+│   └── Bulkhead Pattern
+│
+├── 14. Security in System Design
+│   ├── Authentication & Authorization
+│   ├── OAuth 2.0
+│   ├── OpenID Connect
+│   ├── JWT
+│   ├── Session-Based Authentication
+│   ├── Role-Based Access Control (RBAC)
+│   ├── Attribute-Based Access Control (ABAC)
+│   ├── Encryption at Rest
+│   ├── Encryption in Transit
+│   ├── TLS
+│   ├── Password Hashing
+│   ├── API Security
+│   ├── Rate Limiting & DDoS Protection
+│   ├── SQL Injection
+│   ├── Cross-Site Scripting (XSS)
+│   ├── CSRF
+│   ├── Secrets Management
+│   ├── Zero Trust Architecture
+│   └── Audit Logging
+│
+├── 15. Observability & Monitoring
+│   ├── Logging
+│   ├── Metrics
+│   ├── Distributed Tracing
+│   ├── OpenTelemetry
+│   ├── Prometheus
+│   ├── Grafana
+│   ├── ELK Stack
+│   ├── Alerting
+│   ├── Health Monitoring
+│   ├── SLI / SLO / SLA
+│   ├── Error Budgets
+│   ├── Latency Monitoring
+│   ├── Throughput Monitoring
+│   ├── Root Cause Analysis
+│   └── Incident Management
+│
+├── 16. Cloud & Infrastructure
+│   ├── Cloud Computing Fundamentals
+│   ├── AWS / GCP / Azure
+│   ├── Compute Services
+│   ├── Storage Services
+│   ├── Managed Databases
+│   ├── Virtual Private Cloud (VPC)
+│   ├── DNS & Networking in Cloud
+│   ├── Object Storage (S3)
+│   ├── Containers
+│   ├── Docker
+│   ├── Kubernetes
+│   ├── Container Orchestration
+│   ├── Infrastructure as Code
+│   │   ├── Terraform
+│   │   └── CloudFormation
+│   ├── CI/CD Pipelines
+│   ├── Blue-Green Deployment
+│   ├── Canary Deployment
+│   ├── Rolling Deployment
+│   └── Serverless Infrastructure
+│
+├── 17. Storage Systems & File Architecture
+│   ├── Block Storage
+│   ├── File Storage
+│   ├── Object Storage
+│   ├── Distributed File Systems
+│   ├── Content Delivery Networks
+│   ├── File Upload Architecture
+│   ├── Multipart Upload
+│   ├── Resumable Uploads
+│   ├── Data Deduplication
+│   ├── Compression
+│   ├── Data Retention
+│   ├── Backup Strategies
+│   ├── Blob Storage
+│   └── Metadata Management
+│
+├── 18. Real-Time Systems
+│   ├── WebSockets
+│   ├── Server-Sent Events
+│   ├── Long Polling
+│   ├── Real-Time Notifications
+│   ├── Presence Systems
+│   ├── Heartbeats
+│   ├── Live Chat Architecture
+│   ├── Real-Time Collaboration
+│   ├── Pub/Sub Architecture
+│   ├── Fan-Out Strategies
+│   ├── Online Gaming Architecture
+│   └── Real-Time Data Processing
+│
+├── 19. Advanced Distributed Systems
+│   ├── Distributed Hash Tables
+│   ├── Consistent Hashing
+│   ├── Gossip Protocol
+│   ├── Merkle Trees
+│   ├── Vector Clocks
+│   ├── Lamport Clocks
+│   ├── CRDTs
+│   ├── Distributed Snapshots
+│   ├── Leader Election
+│   ├── Log Replication
+│   ├── Stream Processing
+│   ├── Apache Flink
+│   ├── Apache Spark
+│   ├── Data Locality
+│   ├── Multi-Region Architecture
+│   ├── Geo-Replication
+│   └── Global Traffic Management
+│
+├── 20. Low-Level Design (LLD)
+│   ├── Object-Oriented Design
+│   ├── SOLID Principles
+│   ├── DRY / KISS / YAGNI
+│   ├── UML Class Diagrams
+│   ├── Sequence Diagrams
+│   ├── State Diagrams
+│   ├── Class Relationships
+│   ├── Composition vs Inheritance
+│   ├── Interfaces & Abstractions
+│   ├── Design Patterns
+│   ├── Extensibility & Maintainability
+│   ├── Concurrency in LLD
+│   ├── Thread Safety
+│   └── Common LLD Problems
+│       ├── Parking Lot
+│       ├── Library Management System
+│       ├── Elevator System
+│       ├── Splitwise
+│       ├── BookMyShow
+│       ├── Chess
+│       └── Food Delivery System
+│
+├── 21. High-Level Design (HLD)
+│   ├── Requirement Gathering
+│   ├── Functional & Non-Functional Requirements
+│   ├── API Design
+│   ├── Database Schema Design
+│   ├── Capacity Estimation
+│   ├── Component Diagrams
+│   ├── Data Flow Diagrams
+│   ├── Architecture Diagrams
+│   ├── Bottleneck Identification
+│   ├── Scaling Strategies
+│   ├── Reliability & Fault Tolerance
+│   ├── Security Considerations
+│   ├── Trade-off Analysis
+│   ├── Architecture Documentation
+│   └── End-to-End System Design
+│
+├── 22. System Design Case Studies
+│   ├── URL Shortener (TinyURL)
+│   ├── Pastebin
+│   ├── Rate Limiter
+│   ├── Notification System
+│   ├── News Feed (Facebook / Instagram)
+│   ├── Chat Application (WhatsApp)
+│   ├── Video Streaming (YouTube / Netflix)
+│   ├── Ride-Hailing (Uber)
+│   ├── Food Delivery (Swiggy / Zomato)
+│   ├── E-Commerce (Amazon)
+│   ├── Payment System
+│   ├── Search Engine
+│   ├── File Storage (Google Drive / Dropbox)
+│   ├── Ticket Booking (BookMyShow)
+│   ├── Social Media Platform (X)
+│   ├── Recommendation System
+│   ├── Distributed Cache (Redis)
+│   ├── Logging & Monitoring Platform
+│   ├── Web Crawler
+│   └── Video Conferencing System
+│
+├── 23. System Design Tools & Technologies
+│   ├── Programming Languages
+│   │   ├── Go
+│   │   ├── Java
+│   │   └── Python
+│   ├── Databases
+│   │   ├── PostgreSQL
+│   │   ├── MySQL
+│   │   ├── Redis
+│   │   ├── MongoDB
+│   │   └── Cassandra
+│   ├── Message Brokers
+│   │   ├── Kafka
+│   │   └── RabbitMQ
+│   ├── Networking & Proxy
+│   │   ├── Nginx
+│   │   └── HAProxy
+│   ├── Infrastructure
+│   │   ├── Docker
+│   │   ├── Kubernetes
+│   │   └── Terraform
+│   ├── Monitoring
+│   │   ├── Prometheus
+│   │   ├── Grafana
+│   │   └── OpenTelemetry
+│   ├── API Testing
+│   │   ├── Postman
+│   │   └── curl
+│   └── Architecture Documentation
+│       ├── Excalidraw
+│       ├── Draw.io
+│       └── Mermaid
+│
+├── 24. System Design Practice
+│   ├── Design Small Systems First
+│   ├── Design a URL Shortener
+│   ├── Design a Rate Limiter
+│   ├── Design a Notification Service
+│   ├── Design a Chat Application
+│   ├── Design a News Feed
+│   ├── Design a Video Streaming Platform
+│   ├── Design a Ride-Hailing Platform
+│   ├── Design a Payment Service
+│   ├── Design a Distributed Cache
+│   ├── Design a Search Engine
+│   ├── Design a File Storage Service
+│   ├── Design a Ticket Booking System
+│   ├── Design a Real-Time Analytics System
+│   ├── Document Design Decisions
+│   ├── Identify Trade-offs
+│   ├── Review Existing Architectures
+│   └── Build End-to-End Projects
+│
+└── 25. Mastery & Career Preparation
+    ├── Architectural Thinking
+    ├── Breaking Down Complex Problems
+    ├── Requirement Analysis
+    ├── Capacity Estimation
+    ├── Identifying Bottlenecks
+    ├── Choosing the Right Components
+    ├── Scalability Trade-offs
+    ├── Reliability Engineering
+    ├── Distributed Systems Thinking
+    ├── Cost Optimization
+    ├── Security-First Design
+    ├── Architecture Reviews
+    ├── Technical Documentation
+    ├── System Design Interviews
+    ├── Mock Design Interviews
+    ├── Real-World Production Experience
+    └── Continuous Learning
+
+FINAL GOAL:
+Become an Exceptional System Designer
+│
+├── Design Scalable Applications
+├── Build Reliable Distributed Systems
+├── Understand Large-Scale Architectures
+├── Make Strong Engineering Trade-offs
+└── Design Systems Used by Millions of Users
