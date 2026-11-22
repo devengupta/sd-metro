@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sheet">#16337F</color>
+    <!-- An engineering blueprint: cobalt drafting sheet, white linework, safety yellow for "act here". -->
+    <color name="paper">#16337F</color>
+    <color name="card">#1D3F95</color>
     <color name="deep">#0B1C4A</color>
+    <color name="ink">#F3F6FF</color>
+    <color name="muted">#A8BAE8</color>
+    <color name="dim">#8FA3D6</color>
+    <color name="rule">#3DDCE6FF</color>
+    <color name="track">#26DCE6FF</color>
+    <color name="opt">#730B1C4A</color>
+    <color name="signal">#FFD23F</color>
+    <color name="good">#5BE3A1</color>
+    <color name="warn">#FFC94D</color>
+    <color name="bad">#FF7F70</color>
+    <color name="ride">#8EC5FF</color>
 </resources>

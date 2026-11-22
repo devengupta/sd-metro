@@ -1,162 +1,256 @@
 package com.sdmetro.app;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.net.Uri;
+import android.content.Context;
 import android.os.Bundle;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
+import android.view.Gravity;
+import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+/**
+ * The only activity. It owns the shell (scrolling screen, dock, toast) and a back stack of routes:
+ * map, line-N, stop-N-I, today, arcade, profile. Screens are rebuilt from state on every change.
+ */
+public class MainActivity extends Activity implements App.Host {
+    private static final String K_STACK = "stack", K_UI = "ui";
+    private static final Pattern LINE = Pattern.compile("^line-(\\d+)$"), STOP = Pattern.compile("^stop-(\\d+)-(\\d+)$");
+    private static final String[] TABS = {"map", "today", "arcade", "profile"};
 
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-
-/** One screen: the bundled web UI in a WebView, plus a small bridge for password hashing and Claude calls. */
-public class MainActivity extends Activity {
-    private static final String HOME = "file:///android_asset/index.html";
-    private WebView web;
-    private final ExecutorService pool = Executors.newFixedThreadPool(2);
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        web = new WebView(this);
-        web.setBackgroundColor(0xFF16337F);
-        WebSettings s = web.getSettings();
-        s.setJavaScriptEnabled(true);
-        s.setDomStorageEnabled(true);   // localStorage: accounts and progress live here
-        s.setTextZoom(100);
-        web.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                Uri u = request.getUrl();
-                if ("file".equals(u.getScheme())) return false;
-                try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) { }
-                return true;
-            }
-        });
-        web.addJavascriptInterface(new Bridge(), "SDMNative");
-        setContentView(web);
-        web.loadUrl(HOME);
-    }
+    App app;
+    /** Screen width in dp; several sizes follow it the way the CSS used vw and media queries. */
+    float wdp;
+    private LinearLayout view, dock;
+    private ScrollView scroll;
+    private View dockRule;
+    private TextView aiStatus, toast;
+    private final TextView[] nav = new TextView[4];
+    private ArrayList<String> stack = new ArrayList<>();
+    private UiState pendingUi;
+    private final Runnable hideToast = this::hideToast;
+    private final Runnable disarm = () -> {
+        if (app.ui.delArmed) {
+            app.ui.delArmed = false;
+            if (app.me != null && "profile".equals(route())) render();
+        }
+    };
 
     @Override
-    public void onBackPressed() {
-        if (web != null && web.canGoBack()) web.goBack();
-        else super.onBackPressed();
+    protected void onCreate(Bundle saved) {
+        super.onCreate(saved);
+        Ui.init(this);
+        setContentView(R.layout.activity_main);
+        findViewById(R.id.root).setBackground(new W.Grid());
+        view = findViewById(R.id.view);
+        scroll = findViewById(R.id.scroll);
+        dock = findViewById(R.id.dock);
+        dockRule = findViewById(R.id.dockRule);
+        aiStatus = findViewById(R.id.aiStatus);
+        toast = findViewById(R.id.toast);
+        int[] ids = {R.id.navMap, R.id.navToday, R.id.navArcade, R.id.navProfile};
+        for (int i = 0; i < 4; i++) {
+            final String tab = TABS[i];
+            nav[i] = findViewById(ids[i]);
+            nav[i].setOnClickListener(v -> tab(tab));
+        }
+        fitWidth();
+
+        app = App.get(this);
+        app.host = this;
+        if (saved != null) {
+            ArrayList<String> s = saved.getStringArrayList(K_STACK);
+            if (s != null && !s.isEmpty()) stack = s;
+            try { pendingUi = (UiState) saved.getSerializable(K_UI); } catch (Exception e) { pendingUi = null; }
+        }
+        if (stack.isEmpty()) stack.add("map");
+        if (app.ready) onReady(); else { render(); app.load(); }
     }
 
     @Override
     protected void onDestroy() {
-        pool.shutdownNow();
-        if (web != null) web.destroy();
+        if (app != null && app.host == this) app.host = null;
+        toast.removeCallbacks(hideToast);
+        toast.removeCallbacks(disarm);
         super.onDestroy();
     }
 
-    private void reply(final String id, final boolean ok, final String text) {
-        final String js = "window.__sdmCb&&window.__sdmCb(" + JSONObject.quote(id) + "," + ok + "," + JSONObject.quote(text) + ")";
-        runOnUiThread(new Runnable() {
-            @Override public void run() { if (web != null) web.evaluateJavascript(js, null); }
-        });
+    @Override
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        out.putStringArrayList(K_STACK, stack);
+        if (app != null && app.ready) out.putSerializable(K_UI, app.ui);
     }
 
-    private static String err(String code, String message) {
-        try { return new JSONObject().put("code", code).put("message", message).toString(); }
-        catch (Exception e) { return "{\"code\":\"unknown\",\"message\":\"error\"}"; }
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration c) {
+        super.onConfigurationChanged(c);
+        Ui.init(this);
+        fitWidth();
+        render();
     }
 
-    private static String readAll(InputStream in) throws Exception {
-        if (in == null) return "";
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-        in.close();
-        return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    /** Content is at most 760dp wide and centred, as on the web version. */
+    private void fitWidth() {
+        wdp = getResources().getConfiguration().screenWidthDp;
+        int side = Math.max(16, Math.round((wdp - 760) / 2f));
+        View wrap = findViewById(R.id.wrap);
+        wrap.setPadding(Ui.dp(side), wrap.getPaddingTop(), Ui.dp(side), wrap.getPaddingBottom());
     }
 
-    private class Bridge {
-        /** PBKDF2-HMAC-SHA256 of a password; returns hex, or "" on failure. */
-        @JavascriptInterface
-        public String hash(String password, String saltHex) {
-            try {
-                byte[] salt = new byte[saltHex.length() / 2];
-                for (int i = 0; i < salt.length; i++) salt[i] = (byte) Integer.parseInt(saltHex.substring(i * 2, i * 2 + 2), 16);
-                PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 120000, 256);
-                byte[] out = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
-                StringBuilder sb = new StringBuilder();
-                for (byte b : out) sb.append(String.format("%02x", b & 0xff));
-                return sb.toString();
-            } catch (Exception e) {
-                return "";
+    /** Content parsed (or failed): pick up saved screen state when the process was recreated, then draw. */
+    @Override
+    public void onReady() {
+        if (pendingUi != null) {
+            if (app.ui != pendingUi) app.adopt(pendingUi);
+            pendingUi = null;
+        }
+        render();
+    }
+
+    @Override
+    public void rerender() { render(); }
+
+    /* ---------------- navigation ---------------- */
+
+    String route() { return stack.get(stack.size() - 1); }
+
+    /** Opens a screen on top of the current one. */
+    void go(String route) {
+        if (!route.equals(route())) stack.add(route);
+        top();
+    }
+
+    /** Swaps the current screen (previous / next stop) so Back does not replay every stop. */
+    void replace(String route) {
+        stack.set(stack.size() - 1, route);
+        top();
+    }
+
+    /** Goes up to a parent screen: back to it when it is already underneath, otherwise in place of this one. */
+    void up(String route) {
+        int at = stack.lastIndexOf(route);
+        if (at >= 0) { while (stack.size() > at + 1) stack.remove(stack.size() - 1); top(); }
+        else replace(route);
+    }
+
+    /** Dock tabs: Map is the root, the other tabs sit directly on it. */
+    void tab(String name) {
+        stack.clear();
+        stack.add("map");
+        if (!"map".equals(name)) stack.add(name);
+        top();
+    }
+
+    private void top() {
+        hideKeyboard();
+        render();
+        scroll.scrollTo(0, 0);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // On the sign-in screen, and at the root, Back leaves the app.
+        if (app.me == null || stack.size() <= 1) { finish(); return; }
+        stack.remove(stack.size() - 1);
+        top();
+    }
+
+    void hideKeyboard() {
+        View f = getCurrentFocus();
+        if (f != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(f.getWindowToken(), 0);
+            f.clearFocus();
+        }
+    }
+
+    void signedIn() {
+        stack.clear();
+        stack.add("map");
+        top();
+    }
+
+    void signOut() {
+        app.signOut();
+        app.ui.authTab = "in";
+        signedIn();
+    }
+
+    void armDelete() {
+        app.ui.delArmed = true;
+        toast.removeCallbacks(disarm);
+        toast.postDelayed(disarm, 4000);
+        render();
+    }
+
+    /* ---------------- drawing ---------------- */
+
+    void render() {
+        view.removeAllViews();
+        boolean in = app.ready && app.me != null;
+        dock.setVisibility(in ? View.VISIBLE : View.GONE);
+        dockRule.setVisibility(in ? View.VISIBLE : View.GONE);
+        aiStatus.setText(app.ready ? app.aiStatus() : "");
+        if (!app.ready) {
+            LinearLayout box = Ui.col(this);
+            Ui.pad(box, 0, 18, 0, 8);
+            if (app.loadFailed) {
+                box.addView(Ui.body(this, "The bundled lessons could not be read. Reinstall the app."));
+            } else {
+                box.addView(new W.Track(this), Ui.lp(Ui.MATCH, 6));
+                box.addView(Ui.mono(this, "Laying the tracks…", 12, Ui.MUTED), Ui.m(Ui.lp(Ui.MATCH, Ui.WRAP), 0, 8, 0, 0));
             }
+            view.addView(box);
+            return;
         }
+        if (app.me == null) { Screens.auth(this, view); return; }
 
-        /** Sends one prompt to the Anthropic Messages API and calls window.__sdmCb(id, ok, text). */
-        @JavascriptInterface
-        public void ask(final String id, final String prompt, final String model, final String apiKey) {
-            pool.execute(new Runnable() {
-                @Override public void run() {
-                    HttpURLConnection c = null;
-                    try {
-                        JSONObject body = new JSONObject();
-                        body.put("model", model);
-                        body.put("max_tokens", 2000);
-                        body.put("messages", new JSONArray().put(new JSONObject().put("role", "user").put("content", prompt)));
-                        c = (HttpURLConnection) new URL("https://api.anthropic.com/v1/messages").openConnection();
-                        c.setRequestMethod("POST");
-                        c.setConnectTimeout(15000);
-                        c.setReadTimeout(90000);
-                        c.setDoOutput(true);
-                        c.setRequestProperty("content-type", "application/json");
-                        c.setRequestProperty("x-api-key", apiKey);
-                        c.setRequestProperty("anthropic-version", "2023-06-01");
-                        OutputStream os = c.getOutputStream();
-                        os.write(body.toString().getBytes(StandardCharsets.UTF_8));
-                        os.close();
-                        int code = c.getResponseCode();
-                        String txt = readAll(code >= 400 ? c.getErrorStream() : c.getInputStream());
-                        if (code >= 400) {
-                            String msg = "HTTP " + code;
-                            try { msg = new JSONObject(txt).getJSONObject("error").getString("message"); } catch (Exception ignored) { }
-                            String ec = (code == 401 || code == 403) ? "bad_key" : (code == 429 || code == 529) ? "rate_limited" : "unknown";
-                            reply(id, false, err(ec, msg));
-                            return;
-                        }
-                        JSONArray content = new JSONObject(txt).getJSONArray("content");
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 0; i < content.length(); i++) {
-                            JSONObject part = content.getJSONObject(i);
-                            if ("text".equals(part.optString("type"))) sb.append(part.optString("text"));
-                        }
-                        reply(id, true, sb.toString());
-                    } catch (java.net.UnknownHostException e) {
-                        reply(id, false, err("offline", "No internet connection."));
-                    } catch (java.net.SocketTimeoutException e) {
-                        reply(id, false, err("unknown", "Claude took too long to answer."));
-                    } catch (java.io.IOException e) {
-                        reply(id, false, err("offline", "Network error."));
-                    } catch (Exception e) {
-                        reply(id, false, err("unknown", String.valueOf(e.getMessage())));
-                    } finally {
-                        if (c != null) c.disconnect();
-                    }
-                }
-            });
+        String r = route();
+        String navKey = r.startsWith("today") ? "today" : r.startsWith("arcade") ? "arcade" : r.startsWith("profile") ? "profile" : "map";
+        for (int i = 0; i < 4; i++) {
+            boolean cur = TABS[i].equals(navKey);
+            nav[i].setBackgroundColor(cur ? Ui.SIGNAL : 0);
+            nav[i].setTextColor(cur ? Ui.DEEP : Ui.MUTED);
+            nav[i].setSelected(cur);
         }
+        Matcher m;
+        Roadmap.Section sec;
+        Roadmap.Stop stop;
+        if ((m = LINE.matcher(r)).matches() && (sec = app.rm.sec(num(m.group(1)))) != null) Screens.line(this, view, sec);
+        else if ((m = STOP.matcher(r)).matches() && (stop = app.rm.stop(num(m.group(1)), num(m.group(2)))) != null) StopScreen.build(this, view, stop);
+        else if (r.equals("today")) Screens.today(this, view);
+        else if (r.equals("arcade")) Screens.arcade(this, view);
+        else if (r.equals("profile")) Screens.profile(this, view);
+        else Screens.map(this, view);
+    }
+
+    private static int num(String s) {
+        try { return Integer.parseInt(s); } catch (NumberFormatException e) { return -1; }
+    }
+
+    /** True while this stop is the screen being shown. */
+    boolean showing(Roadmap.Stop t) { return app.me != null && route().equals("stop-" + t.sec + "-" + t.idx); }
+
+    @Override
+    public void toast(String message) {
+        toast.setText(message);
+        toast.removeCallbacks(hideToast);
+        toast.setVisibility(View.VISIBLE);
+        toast.setGravity(Gravity.CENTER);
+        toast.animate().cancel();
+        if (toast.getAlpha() == 0) toast.setTranslationY(Ui.dp(20));
+        toast.animate().alpha(1).translationY(0).setDuration(250).start();
+        toast.postDelayed(hideToast, 1800);
+        toast.announceForAccessibility(message);
+    }
+
+    private void hideToast() {
+        toast.animate().alpha(0).translationY(Ui.dp(20)).setDuration(250).start();
     }
 }

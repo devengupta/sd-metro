@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="au_name" type="id" />
+    <item name="au_email" type="id" />
+    <item name="au_pass" type="id" />
+    <item name="au_pass2" type="id" />
+    <item name="au_submit" type="id" />
+    <item name="apikey" type="id" />
+    <item name="del" type="id" />
+    <item name="answer" type="id" />
+</resources>

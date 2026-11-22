@@ -1,9 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Single dark theme by choice; system bars match the dock. -->
     <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
-        <item name="android:windowBackground">@color/sheet</item>
+        <item name="android:windowBackground">@color/paper</item>
         <item name="android:statusBarColor">@color/deep</item>
         <item name="android:navigationBarColor">@color/deep</item>
-        <item name="android:colorAccent">#FFD23F</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:colorAccent">@color/signal</item>
+        <item name="android:colorControlActivated">@color/signal</item>
+        <item name="android:textColorHighlight">#66FFD23F</item>
+    </style>
+
+    <style name="DockItem">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:maxWidth">180dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:paddingLeft">2dp</item>
+        <item name="android:paddingRight">2dp</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:fontFamily">@font/chakra_petch_700</item>
+        <item name="android:textColor">@color/muted</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
     </style>
 </resources>

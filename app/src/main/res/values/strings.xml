@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">SD Metro</string>
+    <string name="nav_map">Map</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_arcade">Arcade</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_label">Main</string>
 </resources>
