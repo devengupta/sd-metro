@@ -1,0 +1,126 @@
+[
+ {
+  "kind": "ride",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "lens": "plain",
+  "expect": "You are an outstanding system design teacher. Teach the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\".\nLearner: preparing for system design interviews; smart, but new to this concept.\nLens: no analogy, straight engineering intuition.\nJSON shape:\n{\"tagline\": \"what it is, max 12 words\",\n \"explain\": [\"paragraph 1: intuition\", \"paragraph 2: how it really works\", \"paragraph 3: when to use it and its trade-off\"],  (each paragraph under 60 words, plain text)\n \"map\": [{\"lens\":\"element of the analogy\",\"real\":\"technical counterpart\"}]  (3 items, or [] if no analogy),\n \"rule_of_thumb\": \"one widely documented number, limit or heuristic engineers use for this; empty string if none is well established\",\n \"seen_in\": \"one well-known real system that uses it and how, max 25 words\",\n \"trap\": \"the most common interview mistake about it, max 25 words\",\n \"remember\": \"a memorable one-line hook, max 18 words\",\n \"check\": [{\"q\":\"short scenario question\",\"options\":[\"\",\"\",\"\",\"\"],\"answer\":0,\"why\":\"max 30 words\"}, {second question}]}\nQuestions should test application, not definitions. Put the correct option at varied positions. Only state facts you are confident are accurate."
+ },
+ {
+  "kind": "ride",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "lens": "dabba",
+  "expect": "You are an outstanding system design teacher. Teach the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\".\nLearner: preparing for system design interviews; smart, but new to this concept.\nLens: build the intuition through \"Mumbai dabbawalas\" (an Indian everyday context), mapped carefully onto the real mechanics.\nJSON shape:\n{\"tagline\": \"what it is, max 12 words\",\n \"explain\": [\"paragraph 1: intuition through the lens\", \"paragraph 2: how it really works\", \"paragraph 3: when to use it and its trade-off\"],  (each paragraph under 60 words, plain text)\n \"map\": [{\"lens\":\"element of the analogy\",\"real\":\"technical counterpart\"}]  (3 items, or [] if no analogy),\n \"rule_of_thumb\": \"one widely documented number, limit or heuristic engineers use for this; empty string if none is well established\",\n \"seen_in\": \"one well-known real system that uses it and how, max 25 words\",\n \"trap\": \"the most common interview mistake about it, max 25 words\",\n \"remember\": \"a memorable one-line hook, max 18 words\",\n \"check\": [{\"q\":\"short scenario question\",\"options\":[\"\",\"\",\"\",\"\"],\"answer\":0,\"why\":\"max 30 words\"}, {second question}]}\nQuestions should test application, not definitions. Put the correct option at varied positions. Only state facts you are confident are accurate."
+ },
+ {
+  "kind": "ride",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "lens": "wedding",
+  "expect": "You are an outstanding system design teacher. Teach the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\".\nLearner: preparing for system design interviews; smart, but new to this concept.\nLens: build the intuition through \"Big Indian wedding\" (an Indian everyday context), mapped carefully onto the real mechanics.\nJSON shape:\n{\"tagline\": \"what it is, max 12 words\",\n \"explain\": [\"paragraph 1: intuition through the lens\", \"paragraph 2: how it really works\", \"paragraph 3: when to use it and its trade-off\"],  (each paragraph under 60 words, plain text)\n \"map\": [{\"lens\":\"element of the analogy\",\"real\":\"technical counterpart\"}]  (3 items, or [] if no analogy),\n \"rule_of_thumb\": \"one widely documented number, limit or heuristic engineers use for this; empty string if none is well established\",\n \"seen_in\": \"one well-known real system that uses it and how, max 25 words\",\n \"trap\": \"the most common interview mistake about it, max 25 words\",\n \"remember\": \"a memorable one-line hook, max 18 words\",\n \"check\": [{\"q\":\"short scenario question\",\"options\":[\"\",\"\",\"\",\"\"],\"answer\":0,\"why\":\"max 30 words\"}, {second question}]}\nQuestions should test application, not definitions. Put the correct option at varied positions. Only state facts you are confident are accurate."
+ },
+ {
+  "kind": "pagerStart",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "name": "Indexing",
+  "expect": "Run a production incident simulation that teaches the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\". The learner is the on-call engineer.\nInvent a fictional company (an Indian consumer app context is welcome) and a realistic incident where understanding \"Indexing\" is the key to resolving it. Never name the concept in the alert or context.\nJSON shape: {\"company\":\"fictional name\",\"service\":\"service name\",\"alert\":\"pager text, max 20 words\",\"context\":\"what is happening and what you can see, max 55 words\",\"metrics\":[{\"name\":\"\",\"value\":\"\",\"state\":\"bad|warn|ok\"}] (3 or 4),\"choices\":[\"\",\"\",\"\"]}\nChoices: 3 concrete actions, max 18 words each: one strong, one tempting but wrong, one partial. Random order. No hints about which is which."
+ },
+ {
+  "kind": "pagerChoose",
+  "ctx": "the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\"",
+  "company": "ChaiCart",
+  "n": 1,
+  "history": "[{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]",
+  "choice": "A \"quoted\" move",
+  "expect": "Incident simulation teaching the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\". Company: ChaiCart. This is round 1 of at most 3.\nHistory so far: [{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]\nThe learner just chose: \"A \"quoted\" move\".\nJudge that choice honestly, as a senior SRE would, then continue the story.\nJSON shape: {\"quality\":\"strong|partial|wrong\",\"outcome\":\"what happens because of the choice, max 45 words\",\"lesson\":\"the underlying principle, max 30 words\",\n \"next\": null if the incident is fully resolved, otherwise {\"alert\":\"\",\"context\":\"\",\"metrics\":[{\"name\":\"\",\"value\":\"\",\"state\":\"bad|warn|ok\"}],\"choices\":[\"\",\"\",\"\"]} with the same rules as before (one strong, one tempting but wrong, one partial, random order),\n \"debrief\": null unless next is null; then {\"survived\":true or false,\"summary\":\"how the night went, max 50 words\",\"better_move\":\"the ideal sequence of moves, max 35 words\"}}"
+ },
+ {
+  "kind": "pagerChoose",
+  "ctx": "the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\"",
+  "company": "ChaiCart",
+  "n": 2,
+  "history": "[{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]",
+  "choice": "A \"quoted\" move",
+  "expect": "Incident simulation teaching the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\". Company: ChaiCart. This is round 2 of at most 3.\nHistory so far: [{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]\nThe learner just chose: \"A \"quoted\" move\".\nJudge that choice honestly, as a senior SRE would, then continue the story.\nJSON shape: {\"quality\":\"strong|partial|wrong\",\"outcome\":\"what happens because of the choice, max 45 words\",\"lesson\":\"the underlying principle, max 30 words\",\n \"next\": null if the incident is fully resolved, otherwise {\"alert\":\"\",\"context\":\"\",\"metrics\":[{\"name\":\"\",\"value\":\"\",\"state\":\"bad|warn|ok\"}],\"choices\":[\"\",\"\",\"\"]} with the same rules as before (one strong, one tempting but wrong, one partial, random order),\n \"debrief\": null unless next is null; then {\"survived\":true or false,\"summary\":\"how the night went, max 50 words\",\"better_move\":\"the ideal sequence of moves, max 35 words\"}}"
+ },
+ {
+  "kind": "pagerChoose",
+  "ctx": "the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\"",
+  "company": "ChaiCart",
+  "n": 3,
+  "history": "[{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]",
+  "choice": "A \"quoted\" move",
+  "expect": "Incident simulation teaching the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\". Company: ChaiCart. This is round 3 of at most 3.\nHistory so far: [{\"round\":1,\"alert\":\"p99 latency 4s\",\"context\":\"Orders table scans\",\"choices\":[\"Add index\",\"Restart DB\",\"Add cache\"],\"chosen\":\"Add cache\",\"result\":\"Helps a little\"},{\"round\":2,\"alert\":\"CPU 95%\",\"context\":\"Still scanning\",\"choices\":[\"A \\\"quoted\\\" move\",\"B\",\"C\"],\"chosen\":\"B\"}]\nThe learner just chose: \"A \"quoted\" move\".\nJudge that choice honestly, as a senior SRE would, then continue the story.\nJSON shape: {\"quality\":\"strong|partial|wrong\",\"outcome\":\"what happens because of the choice, max 45 words\",\"lesson\":\"the underlying principle, max 30 words\",\n \"next\": null,\n \"debrief\": null unless next is null; then {\"survived\":true or false,\"summary\":\"how the night went, max 50 words\",\"better_move\":\"the ideal sequence of moves, max 35 words\"}}"
+ },
+ {
+  "kind": "teachAsk",
+  "ctx": "the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\"",
+  "expect": "You play Ravi, a sharp junior engineer six months out of college, asking a senior colleague about the topic \"How the Internet Works\" from the system design roadmap section \"Computer Science Fundamentals\".\nAsk ONE question that forces a real explanation: a \"why\", \"what happens when\" or \"how would you choose\" question, the kind an interviewer would ask. Casual, friendly tone.\nJSON shape: {\"question\":\"max 35 words\"}"
+ },
+ {
+  "kind": "teachGrade",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "question": "Why not index every column?",
+  "answer": "An index is a sorted structure that avoids full scans.",
+  "expect": "Grade a learner's explanation of the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\", as a fair but demanding system design interviewer would.\nQuestion (asked by Ravi, a junior engineer): \"Why not index every column?\"\nLearner's answer: \"\"\"An index is a sorted structure that avoids full scans.\"\"\"\nScoring: 0 = wrong or empty, 1 = vague or partly wrong, 2 = correct and clear, 3 = correct with trade-offs or edge cases.\nJSON shape: {\"score\":0,\"reaction\":\"Ravi's honest reply in his voice; if something is missing, he asks about it. max 30 words\",\"nailed\":[\"up to 3 short items\"],\"missing\":[\"up to 3 short items\"],\"model_answer\":\"a crisp answer in 3 sentences\"}"
+ },
+ {
+  "kind": "teachGrade",
+  "ctx": "the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\"",
+  "question": "Why not index every column?",
+  "answer": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "expect": "Grade a learner's explanation of the topic \"Indexing\" from the system design roadmap section \"Database Fundamentals\", under \"Relational Databases\", as a fair but demanding system design interviewer would.\nQuestion (asked by Ravi, a junior engineer): \"Why not index every column?\"\nLearner's answer: \"\"\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\"\"\nScoring: 0 = wrong or empty, 1 = vague or partly wrong, 2 = correct and clear, 3 = correct with trade-offs or edge cases.\nJSON shape: {\"score\":0,\"reaction\":\"Ravi's honest reply in his voice; if something is missing, he asks about it. max 30 words\",\"nailed\":[\"up to 3 short items\"],\"missing\":[\"up to 3 short items\"],\"model_answer\":\"a crisp answer in 3 sentences\"}"
+ },
+ {
+  "kind": "err",
+  "code": "not_granted",
+  "message": "",
+  "expect": "This mode needs your Anthropic API key. Add it in Profile."
+ },
+ {
+  "kind": "err",
+  "code": "bad_key",
+  "message": "invalid x-api-key",
+  "expect": "Anthropic rejected the API key. Check it in Profile."
+ },
+ {
+  "kind": "err",
+  "code": "offline",
+  "message": "x",
+  "expect": "No internet connection. This mode needs to reach Claude; the Arcade and reviews work offline."
+ },
+ {
+  "kind": "err",
+  "code": "rate_limited",
+  "message": "",
+  "expect": "Claude is busy right now. Wait a minute, then try again."
+ },
+ {
+  "kind": "err",
+  "code": "resource_exhausted",
+  "message": "",
+  "expect": "Claude is busy right now. Wait a minute, then try again."
+ },
+ {
+  "kind": "err",
+  "code": "unknown",
+  "message": "HTTP 500",
+  "expect": "That run did not come through (HTTP 500). Try again."
+ },
+ {
+  "kind": "err",
+  "code": "bad_output",
+  "message": "Claude replied in an unexpected format.",
+  "expect": "That run did not come through (Claude replied in an unexpected format.). Try again."
+ },
+ {
+  "kind": "err",
+  "code": "weird",
+  "message": "",
+  "expect": "That run did not come through (weird). Try again."
+ },
+ {
+  "kind": "err",
+  "code": "",
+  "message": "",
+  "expect": "That run did not come through (unknown error). Try again."
+ }
+]
