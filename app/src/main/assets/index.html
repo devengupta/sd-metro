@@ -17,6 +17,7 @@
 
 /* ---------- app additions: sign-in and profile ---------- */
 nav.dock[hidden]{display:none}
+[hidden]{display:none!important}
 .field{display:grid;gap:4px;margin:12px 0}
 .field label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
 input[type=text],input[type=email],input[type=password]{width:100%;border:1px solid var(--rule);padding:11px 10px;font:inherit;background:var(--deep);color:var(--ink);border-radius:0}
@@ -1392,7 +1393,8 @@ function renderArcade(){
   document.querySelector(`[data-g="${UI.game}"]`).setAttribute('aria-pressed','true');
   ({ladder:gLadder,napkin:gQuiz,pattern:gQuiz})[UI.game]();
 }
-function finishGame(k,score){ if(score>(S.arcade[k]||0)) S.arcade[k]=score; addXP(score*5+5, GAMES[k][0]+' '+score+'/5'); }
+function finishGame(k,score){ if(score>(S.arcade[k]||0)) S.arcade[k]=score; addXP(score*5+5, GAMES[k][0]+' '+score+'/5');
+  const b=document.querySelector(`[data-g="${k}"] .best`); if(b) b.textContent='Best: '+(S.arcade[k]||0)+'/5'; }
 function gLadder(){
   const P=$('#gpanel');
   if(!G||G.k!=='ladder'){G={k:'ladder',items:shuffle(LAT).slice(0,5),pick:[]};}
@@ -1401,7 +1403,7 @@ function gLadder(){
     P.innerHTML=`<h3>Latency Ladder</h3><p class="note" style="margin-top:0">Tap from <b>fastest</b> to <b>slowest</b>. Tap a picked one to undo.</p>
       <div class="ladder">${G.items.map((it,i)=>{const p=G.pick.indexOf(i);return `<button class="lad ${p>=0?'picked':''}" data-i="${i}"><span>${esc(it[0])}</span><span class="ord">${p>=0?p+1:''}</span></button>`;}).join('')}</div>`;
     P.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{const i=+b.dataset.i; const p=G.pick.indexOf(i);
-      if(p>=0) G.pick.splice(p); else G.pick.push(i);
+      if(p>=0) G.pick.splice(p,1); else G.pick.push(i);
       if(G.pick.length===5){const sorted=G.items.map((x,i)=>i).sort((a,b)=>G.items[a][1]-G.items[b][1]); G.score=G.pick.filter((v,j)=>G.items[v][1]===G.items[sorted[j]][1]).length; finishGame('ladder',G.score);} gLadder();});
     return;
   }
