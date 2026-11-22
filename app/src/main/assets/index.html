@@ -988,6 +988,12 @@ function setAI(st){AI_STATE=st; const el=$('#aiStatus');
   el.textContent = !ME ? '' : st==='on' ? 'Claude key connected: each mode can also generate a fresh version.' : 'Everything here works offline.';
 }
 async function askJSON(prompt,opts){
+  // A reply that lands after sign-out (or another sign-in) must not be applied to whoever is current now.
+  const me=ME, v=await askRaw(prompt,opts);
+  if(ME!==me) throw {code:'signed_out',message:'signed out'};
+  return v;
+}
+async function askRaw(prompt,opts){
   if(!SAMPLE) throw {code:'not_granted'};
   const full='Reply with ONLY one JSON object. No prose before or after, no code fences.\n\n'+prompt;
   const o=Object.assign({modelTier:'default'},opts||{});
@@ -1534,8 +1540,9 @@ window.__sdmCb=function(id,ok,text){
   if(ok) c.res(text);
   else { let e={code:'unknown',message:String(text)}; try{e=JSON.parse(text);}catch(x){} c.rej(e); }
 };
+function keyK(){return KK+'.'+ME.id;}   // the API key belongs to one account, not to the phone
 function refreshAI(){
-  const key=lsGet(KK,'');
+  const key=ME?lsGet(keyK(),''):'';
   if(NATIVE&&NATIVE.ask&&key){
     SAMPLE=function(input,o){
       return new Promise((res,rej)=>{
@@ -1553,10 +1560,11 @@ const AUTH={tab:Object.keys(ACC).length?'in':'up',err:'',name:'',email:'',busy:f
 function enter(email){
   ME=ACC[email]; lsSet(SK,email);
   LS='sdm.v1.'+ME.id; loadState();
+  const old=lsGet(KK,''); if(old){ if(!lsGet(keyK(),'')) lsSet(keyK(),old); lsDel(KK); }   // key saved by an older version: move it to this account
   UI.mode={}; UI.ride={}; UI.pager={}; UI.teach={}; UI.live={}; UI.s={}; UI.game=null; G=null;
   refreshAI();
 }
-function signOut(){ ME=null; lsDel(SK); S=blank(); AUTH.tab='in'; AUTH.err=''; AUTH.email=''; setAI('off'); location.hash='#map'; route(); window.scrollTo(0,0); }
+function signOut(){ ME=null; lsDel(SK); S=blank(); AUTH.tab='in'; AUTH.err=''; AUTH.email=''; refreshAI(); location.hash='#map'; route(); window.scrollTo(0,0); }
 function renderAuth(){
   const up=AUTH.tab==='up', n=Object.keys(ACC).length;
   $('#view').innerHTML=`
@@ -1613,7 +1621,7 @@ function renderAuth(){
 /* ================= PROFILE ================= */
 let delArmed=false;
 function renderProfile(){
-  const key=lsGet(KK,''); const n=Object.keys(ACC).length;
+  const key=lsGet(keyK(),''); const n=Object.keys(ACC).length;
   $('#view').innerHTML=`
     <header class="mast"><div><h1>Profile</h1><div class="sub">${esc(ME.email)}</div></div></header>
     ${ticketHTML()}
@@ -1632,11 +1640,11 @@ function renderProfile(){
     <div class="card"><p class="note" style="margin:0 0 10px">Deletes this account and all its progress from this phone. This cannot be undone.</p>
       <button class="btn alt danger" id="del">${delArmed?'Tap again to delete forever':'Delete this account'}</button></div>`;
   $('#so').onclick=signOut;
-  $('#ks').onclick=()=>{const v=$('#apikey').value.trim(); if(v.length<20){toast('That does not look like an API key'); return;} lsSet(KK,v); refreshAI(); toast('Key saved'); renderProfile();};
-  const kr=$('#kr'); if(kr) kr.onclick=()=>{lsDel(KK); refreshAI(); toast('Key removed'); renderProfile();};
+  $('#ks').onclick=()=>{const v=$('#apikey').value.trim(); if(v.length<20){toast('That does not look like an API key'); return;} lsSet(keyK(),v); refreshAI(); toast('Key saved'); renderProfile();};
+  const kr=$('#kr'); if(kr) kr.onclick=()=>{lsDel(keyK()); refreshAI(); toast('Key removed'); renderProfile();};
   $('#del').onclick=()=>{
     if(!delArmed){delArmed=true; renderProfile(); setTimeout(()=>{if(delArmed){delArmed=false; if(location.hash==='#profile'&&ME) renderProfile();}},4000); return;}
-    delArmed=false; lsDel('sdm.v1.'+ME.id); delete ACC[ME.email]; lsSet(AK,ACC); signOut(); toast('Account deleted');
+    delArmed=false; lsDel('sdm.v1.'+ME.id); lsDel(keyK()); delete ACC[ME.email]; lsSet(AK,ACC); signOut(); toast('Account deleted');
   };
 }
 
